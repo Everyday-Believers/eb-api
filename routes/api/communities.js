@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const keys = require("../../config/keys");
+const keys = require("../../config/config");
 // Load Community model
 const Community = require("../../models/Community");
 
@@ -66,17 +66,13 @@ router.post("/find", (req, res) => {
     const eventType = req.body.eventType;
     const supportGroupType = req.body.supportGroupType;
 
-
-
-
-
-// Find user by email
+    // Find user by email
     User.findOne({email}).then(user => {
         // Check if user exists
         if (!user) {
             return res.status(404).json({emailnotfound: "Email not found"});
         }
-// Check password
+        // Check password
         bcrypt.compare(password, user.password).then(isMatch => {
             if (isMatch) {
                 // User matched

@@ -5,7 +5,7 @@ const passport = require("passport");
 const users = require("./routes/api/users");
 const communities = require("./routes/api/communities");
 const app = express();
-// Bodyparser middleware
+// Body-parser middleware
 app.use(
     bodyParser.urlencoded({
         extended: false
@@ -13,7 +13,7 @@ app.use(
 );
 app.use(bodyParser.json());
 // DB Config
-const db = require("./config/keys").mongoURI;
+const db = require("./config/config").mongoURI;
 // Connect to MongoDB
 mongoose
     .connect(
