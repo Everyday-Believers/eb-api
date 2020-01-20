@@ -5,16 +5,16 @@ const jwt = require("jsonwebtoken");
 const isEmpty = require("is-empty");
 const btoa = require("btoa"); // hash
 const base64 = require("base-64"); // base64
-const config = require("../../config/config");
+const config = require("../config");
 // Load input validators
 const Validator = require("validator");
-const validateRegisterInput = require("../../validation/register");
-const validateLoginInput = require("../../validation/login");
+const validateRegisterInput = require("../validation/register");
+const validateLoginInput = require("../validation/login");
 // Load models
-const User = require("../../models/User");
-const ResetPending = require("../../models/ResetPending");
+const User = require("../models/User");
+const ResetPending = require("../models/ResetPending");
 // mailer
-const fycmailer = require("../../utils/fyc-mailer");
+const fycmailer = require("../utils/fyc-mailer");
 
 // @route POST api/users/register
 // @desc Register user
@@ -58,7 +58,6 @@ router.post("/register", (req, res) => {
 router.post("/googleregister", (req, res) => {
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
-			console.log(req.body);
 			return res.status(400).json({email: "Email already exists"});
 		}
 		else{
@@ -104,12 +103,19 @@ router.post("/login", (req, res) => {
 				const payload = {
 					id: user.id,
 					fname: user.fname,
-					lname: user.lname
+					lname: user.lname,
+					email: user.email,
+					p_len: user.password.length, // is password's length for displaying on UI (FE).
+					ref_code: user.ref_code,
+					registered_at: user.registered_at,
+					billing_card: user.billing_card,
+					billing_zip_code: user.billing_zip_code,
 				};
+
 				// Sign token
 				jwt.sign(
 					payload,
-					config.secretOrKey,
+					config.SECRET_KEY,
 					{
 						expiresIn: 31556926 // 1 year in seconds
 					},
@@ -138,7 +144,7 @@ router.post("/googlelogin", (req, res) => {
 	// Sign token
 	jwt.sign(
 		payload,
-		config.secretOrKey,
+		config.SECRET_KEY,
 		{
 			expiresIn: 31556926 // 1 year in seconds
 		},
@@ -202,7 +208,7 @@ router.post("/resetpassword", (req, res) => {
 							console.log(`send mail failed: ${err}`);
 							return res.status(400).json({
 								success: false,
-								email: `Error: ${err}`
+								email: `Oops! ${err}`
 							});
 						}
 						else{
@@ -333,5 +339,147 @@ router.post("/doresetpassword", (req, res) => {
 		}
 	});
 });
+
+/**
+ * Update user information
+ * updates:
+ * 		fname: first name
+ * 		lname: last name
+ * 		password: password
+ * 		ref_code: referral code
+ * 		billing_card: billing card
+ * 		billing_zip_code: billing zip code
+ */
+router.post("/update", (req, res) => {
+	// req.body.
+
+	User.findOne({email: req.body.email}).then(user => {
+		if(user){
+			if(req.body.fname !== undefined){
+				if(isEmpty(req.body.fname)){
+					return res.status(400).json({msg_name: "Invalid first name."});
+				}
+				else if(isEmpty(req.body.lname)){
+					return res.status(400).json({msg_name: "Invalid last name."});
+				}
+				else if(user.fname === req.body.fname && user.lname === req.body.lname){
+					return res.status(400).json({msg_name: "Your name has been not changed."});
+				}
+
+				user.fname = req.body.fname;
+				user.lname = req.body.lname;
+				user
+					.save()
+					.then(() => {
+						// modified
+						return res.status(200).json({msg_name: "Your name has been changed."});
+					})
+					.catch(() => {
+						return res.status(500).json({msg_name: "Database error."});
+					});
+			}
+			else if(req.body.password !== undefined){
+				if(isEmpty(req.body.password)){
+					return res.status(400).json({msg_password: "Password cannot be empty."});
+				}
+				else if(req.body.password !== req.body.password2){
+					return res.status(400).json({msg_password: "Passwords not matched."});
+				}
+				else{
+					// Hash password before saving in database
+					bcrypt.genSalt(10, (err, salt) => {
+						bcrypt.hash(req.body.password, salt, (err, hash) => {
+							if(err){
+								return res.status(400).json({msg_password: err});
+							}
+							user.password = hash;
+							user
+								.save()
+								.then(() => {
+									// modified
+									return res.status(200).json({msg_password: "Your password has been modified."});
+								})
+								.catch(() => {
+									return res.status(500).json({msg_password: "Database error."});
+								});
+						});
+					});
+				}
+			}
+			else if(req.body.ref_code !== undefined){
+				if(isEmpty(req.body.ref_code)){
+					return res.status(400).json({msg_ref_code: "You entered empty value."});
+				}
+				else if(user.ref_code === req.body.ref_code){
+					return res.status(200).json({msg_ref_code: "Not modified!"});
+				}
+				else{
+					User.findOne({ref_code: req.body.ref_code}).then(usr => {
+						if(usr){
+							return res.status(400).json({msg_ref_code: "The code was duplicated with other."});
+						}
+						else{
+							user.ref_code = req.body.ref_code;
+							user
+								.save()
+								.then(() => {
+									// modified
+									return res.status(200).json({msg_ref_code: "Modified!"});
+								})
+								.catch(() => {
+									return res.status(500).json({msg_ref_code: "Database error."});
+								});
+						}
+					});
+				}
+			}
+			else if(req.body.billing_card !== undefined){
+				if(isEmpty(req.body.billing_card)){
+					return res.status(400).json({msg_billing_card: "You entered empty value."});
+				}
+				else if(user.billing_card === req.body.billing_card){
+					return res.status(200).json({msg_billing_card: "Not modified!"});
+				}
+				else{
+					user.billing_card = req.body.billing_card;
+					user
+						.save()
+						.then(() => {
+							// modified
+							return res.status(200).json({msg_billing_card: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_billing_card: "Database error."});
+						});
+				}
+			}
+			else if(req.body.billing_zip_code !== undefined){
+				if(isEmpty(req.body.billing_zip_code)){
+					return res.status(400).json({msg_billing_zip_code: "You entered empty value."});
+				}
+				else if(user.billing_zip_code === req.body.billing_zip_code){
+					return res.status(200).json({msg_billing_zip_code: "Not modified!"});
+				}
+				else{
+					user.billing_zip_code = req.body.billing_zip_code;
+					user
+						.save()
+						.then(() => {
+							// modified
+							return res.status(200).json({msg_billing_zip_code: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_billing_zip_code: "Database error."});
+						});
+				}
+			}
+		}
+		else{
+			return res.status(400).json({msg_email: "Sorry, your email was not registered."});
+		}
+	})
+	;
+})
+;
 
 module.exports = router;

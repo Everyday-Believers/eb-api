@@ -1,20 +1,13 @@
 const nodemailer = require("nodemailer");
-//const smtpTransport = require("nodemailer-smtp-transport");
 
-// preparing of mailer
+/**
+ * mailer for forgot-password and others
+ */
 const fycmailer = nodemailer.createTransport({
-	/*
-	name: 'smtp.mailtrap.io',
-	host: 'smtp.mailtrap.io',
-	port: 587,
-	auth: {
-		user: '4da871999cd654',
-		pass: 'ccaa7485ecc078'
-	},
-	*/
 	/**
 	 * This fake account was generated on https://ethereal.email/ for testing purposes.
 	 */
+	name: 'smtp.ethereal.email',
 	host: 'smtp.ethereal.email',
 	port: 587,
 	auth: {
