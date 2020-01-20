@@ -3,12 +3,14 @@ const cors = require('cors');
 const app = express();
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const {MONGO_URL} = require("./config");
+const {MONGO_URL, FRONT_URL} = require("./config");
 const passport = require("passport");
 const users = require("./routes/users");
 const communities = require("./routes/communities");
 
-app.use(cors());
+app.use(cors({
+	origin: FRONT_URL,
+}));
 
 // Body-parser middleware
 app.use(
