@@ -6,7 +6,7 @@
 	"scripts": {
 		"client-install": "npm install --prefix client",
 		"start": "nodemon index.js",
-		"server": "nodemon index.js",
+		"server": "npm install && node index.js",
 		"client": "npm start --prefix client",
 		"dev": "concurrently \"npm run server\" \"npm run client\"",
 		"test": "echo \"Error: no test specified\" && exit 1"
