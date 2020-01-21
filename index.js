@@ -9,7 +9,7 @@ const users = require("./routes/users");
 const communities = require("./routes/communities");
 
 app.use(cors({
-	origin: FRONT_URL,
+	origin: "*",
 }));
 
 // Body-parser middleware
@@ -18,7 +18,6 @@ app.use(
 		extended: false
 	})
 );
-
 app.use(bodyParser.json());
 
 // Connect to MongoDB
