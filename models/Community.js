@@ -25,8 +25,8 @@ const CommunitySchema = new Schema({
 		type: String,
 		required: true
 	},
-	picture: {
-		type: String,
+	pictures: {
+		type: Object,
 		required: false
 	},
 	community_contact: {
@@ -54,6 +54,14 @@ const CommunitySchema = new Schema({
 		required: false
 	},
 	youtube: {
+		type: String,
+		required: false
+	},
+	podcast: {
+		type: String,
+		required: false
+	},
+	twitter: {
 		type: String,
 		required: false
 	},

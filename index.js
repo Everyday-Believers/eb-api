@@ -15,10 +15,14 @@ app.use(cors({
 // Body-parser middleware
 app.use(
 	bodyParser.urlencoded({
-		extended: false
-	})
-);
-app.use(bodyParser.json());
+		limit: '50mb',
+		extended: true
+	}));
+app.use(
+	bodyParser.json({
+		limit: '50mb',
+		extended: true
+	}));
 
 // Connect to MongoDB
 mongoose
