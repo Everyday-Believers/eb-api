@@ -10,7 +10,7 @@ const Community = require("../models/Community");
 // @desc Register community
 // @access Public
 router.post("/create", (req, res) => {
-	const community_info = req.body;
+	const community_info = req.body.data;
 
 	// console.log(community_info);
 
@@ -33,8 +33,17 @@ router.post("/create", (req, res) => {
 			category: community_info.category,
 			address: community_info.address,
 		}).then(community => {
-			if(community){ // if it already exists, cannot create it.
-				return res.status(400).json({msg_community: "The community already exists."});
+			if(community){ // if it already exists and new, cannot create it.
+				if(req.body.is_new){ // cannot create
+					return res.status(400).json({msg_community: "The community already exists."});
+				}
+				else{ // edit it.
+					community.updateOne(community_info)
+						.then(() => {
+							return res.status(200).json({msg_community: "The community was saved."});
+						})
+						.catch(err => console.log(err));
+				}
 			}
 			else{ // we can create it.
 				const newCommunity = new Community({
@@ -111,9 +120,66 @@ router.post("/find", (req, res) => {
 	});
 });
 
+/**
+ * get my communities
+ */
 router.post("/mine", (req, res) => {
 	Community.find({...req.body}).then(mines => {
 		return res.status(200).json({activated: req.body.activated, results: [...mines]});
+	});
+});
+
+/**
+ * activate the community
+ */
+router.post("/activate", (req, res) => {
+	Community.findOne({_id: req.body.community_id}).then(community => {
+		if(community){
+			community.updateOne({activated: true})
+				.then(() => {
+					return res.status(200).json({msg_community: "The community was activated."});
+				})
+				.catch(err => res.status(400).json({msg_community: err.toString()}));
+		}
+		else{
+			return res.status(400).json({msg_community: "The community could not be activated."});
+		}
+	});
+});
+
+/**
+ * deactivate the community
+ */
+router.post("/deactivate", (req, res) => {
+	Community.findOne({_id: req.body.community_id}).then(community => {
+		if(community){
+			community.updateOne({activated: false})
+				.then(() => {
+					return res.status(200).json({msg_community: "The community was deactivated."});
+				})
+				.catch(err => res.status(400).json({msg_community: err.toString()}));
+		}
+		else{
+			return res.status(400).json({msg_community: "The community could not be deactivated."});
+		}
+	});
+});
+
+/**
+ * delete the community
+ */
+router.post("/delete", (req, res) => {
+	Community.findOne({_id: req.body.community_id}).then(community => {
+		if(community){
+			community.remove({activated: true})
+				.then(() => {
+					return res.status(200).json({msg_community: "A community was deleted."});
+				})
+				.catch(err => res.status(400).json({msg_community: err.toString()}));
+		}
+		else{
+			return res.status(400).json({msg_community: "The community could not be deleted."});
+		}
 	});
 });
 
