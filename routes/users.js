@@ -108,6 +108,8 @@ router.post("/login", (req, res) => {
 					p_len: user.password.length, // is password's length for displaying on UI (FE).
 					ref_code: user.ref_code,
 					registered_at: user.registered_at,
+					email_verified: user.email_verified,
+					email_verified_at: user.email_verified_at,
 					billing_card: user.billing_card,
 					billing_zip_code: user.billing_zip_code,
 				};
@@ -244,8 +246,7 @@ const generatePassword = () => {
 };
 
 /**
- * expiration for pending, in seconds.
- * @type {number}
+ * reset password, and it's also just process of email verification.
  */
 router.post("/doresetpassword", (req, res) => {
 	ResetPending.findOne({key: req.body.key}).then(pending => {
@@ -277,6 +278,8 @@ router.post("/doresetpassword", (req, res) => {
 
 								// DO reset the password newly!
 								usr.password = hash; // ... with hashed value
+								usr.email_verified = true; // this email was verified.
+								usr.email_verified_at = new Date(Date.now());
 								usr
 									.save()
 									.then(() => {
