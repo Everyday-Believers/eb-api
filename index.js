@@ -7,9 +7,9 @@ const {MONGO_URL, FRONT_URL} = require("./config");
 const passport = require("passport");
 const users = require("./routes/users");
 const communities = require("./routes/communities");
+const stripepay = require("./routes/stripe-pay");
 
-app.use(cors({
-	origin: "*",
+app.use(cors({	origin: "*",
 }));
 
 // Body-parser middleware
@@ -39,6 +39,7 @@ require("./utils/passport")(passport);
 // Routes
 app.use("/api/users", users);
 app.use("/api/communities", communities);
+app.use("/api/stripe", stripepay);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server up and running on port ${port} !`));

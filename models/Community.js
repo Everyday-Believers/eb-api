@@ -25,6 +25,10 @@ const CommunitySchema = new Schema({
 		type: String,
 		required: true
 	},
+	coordinate: {
+		type: Object,
+		required: false,
+	},
 	pictures: {
 		type: Object,
 		required: false

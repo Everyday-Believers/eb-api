@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const isEmpty = require("is-empty");
 const btoa = require("btoa"); // hash
 const base64 = require("base-64"); // base64
-const config = require("../config");
 // Load input validators
 const Validator = require("validator");
 const validateRegisterInput = require("../validation/register");
@@ -14,6 +13,7 @@ const validateLoginInput = require("../validation/login");
 const User = require("../models/User");
 const ResetPending = require("../models/ResetPending");
 // mailer
+const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
 
 // @route POST api/users/register
@@ -108,6 +108,8 @@ router.post("/login", (req, res) => {
 					p_len: user.password.length, // is password's length for displaying on UI (FE).
 					ref_code: user.ref_code,
 					registered_at: user.registered_at,
+					email_verified: user.email_verified,
+					email_verified_at: user.email_verified_at,
 					billing_card: user.billing_card,
 					billing_zip_code: user.billing_zip_code,
 				};
@@ -244,8 +246,7 @@ const generatePassword = () => {
 };
 
 /**
- * expiration for pending, in seconds.
- * @type {number}
+ * reset password, and it's also just process of email verification.
  */
 router.post("/doresetpassword", (req, res) => {
 	ResetPending.findOne({key: req.body.key}).then(pending => {
@@ -277,6 +278,8 @@ router.post("/doresetpassword", (req, res) => {
 
 								// DO reset the password newly!
 								usr.password = hash; // ... with hashed value
+								usr.email_verified = true; // this email was verified.
+								usr.email_verified_at = new Date(Date.now());
 								usr
 									.save()
 									.then(() => {
