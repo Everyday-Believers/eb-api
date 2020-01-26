@@ -18,13 +18,13 @@ const UserSchema = new Schema({
 		required: true,
 	},
 	email_verified: {
-	    type: Boolean,
-        default: false,
-    },
-    email_verified_at: {
-	    type: Date,
-        default: null,
-    },
+		type: Boolean,
+		default: false,
+	},
+	email_verified_at: {
+		type: Date,
+		default: null,
+	},
 	password: {
 		type: String,
 		required: false,
@@ -51,6 +51,10 @@ const UserSchema = new Schema({
 	},
 	billing_zip_code: {
 		type: String,
+		required: false,
+	},
+	billing_info: { // customer object, which includes the subscriptions and more created from stripe customer.create()
+		type: Object,
 		required: false,
 	}
 });

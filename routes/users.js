@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const isEmpty = require("is-empty");
 const btoa = require("btoa"); // hash
 const base64 = require("base-64"); // base64
-const config = require("../config");
 // Load input validators
 const Validator = require("validator");
 const validateRegisterInput = require("../validation/register");
@@ -14,6 +13,7 @@ const validateLoginInput = require("../validation/login");
 const User = require("../models/User");
 const ResetPending = require("../models/ResetPending");
 // mailer
+const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
 
 // @route POST api/users/register
