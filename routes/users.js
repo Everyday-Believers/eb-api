@@ -112,6 +112,7 @@ router.post("/login", (req, res) => {
 					email_verified_at: user.email_verified_at,
 					billing_card: user.billing_card,
 					billing_zip_code: user.billing_zip_code,
+					billing_info: user.billing_info,
 				};
 
 				// Sign token
@@ -217,7 +218,7 @@ router.post("/resetpassword", (req, res) => {
 							console.log("sent a mail.");
 							return res.status(400).json({
 								success: true,
-								email: "Sent it! To continue, check your mail in 60 seconds"
+								email: "Sent it! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
 							});
 						}
 					});
@@ -480,9 +481,139 @@ router.post("/update", (req, res) => {
 		else{
 			return res.status(400).json({msg_email: "Sorry, your email was not registered."});
 		}
-	})
-	;
-})
-;
+	});
+});
+
+router.post("/changepassword", (req, res) => {
+	// check the email's validation
+	let errors = {};
+	if(Validator.isEmpty(req.body.email)){
+		errors.email = "Email field is required";
+	}
+	else if(!Validator.isEmail(req.body.email)){
+		errors.email = "Email is invalid";
+	}
+	if(!isEmpty(errors)){
+		return res.status(400).json(errors);
+	}
+
+	// generate new password
+	let user = {
+		link: config.FRONT_URL + '/changepassword/',
+	};
+	User.findOne({email: req.body.email}).then(usr => {
+		if(usr){
+			user.fname = usr.fname;
+			const link_key = base64.encode(btoa(usr.fname + usr.lname) + btoa(usr.registered_at.toString()) + btoa(Date.now().toString()));
+			user.link += link_key;
+
+			// Add new pending to reset the password
+			const newPending = new ResetPending({
+				key: link_key,
+				email: req.body.email
+			});
+			newPending
+				.save()
+				.then(() => {
+					// preparing the mail contents...
+					const mailOptions = {
+						from: "FindYourChurch <dont-reply@findyourchurch.com>",
+						to: req.body.email,
+						subject: 'Please check this to change your information',
+						html: `
+							<h2>Hi, ${user.fname}.</h2>
+							<h4>We received your request to change the password. You can continue it by clicking the following:</h4>
+							<p>
+								<a href="${user.link}">${user.link}</a>
+							</p>
+						`
+					};
+
+					// send it!
+					fycmailer.sendMail(mailOptions, function(err, info){
+						if(err){
+							console.log(`send mail failed: ${err}`);
+							return res.status(400).json({
+								success: false,
+								email: `Oops! ${err}`
+							});
+						}
+						else{
+							console.log("sent a mail.");
+							return res.status(400).json({
+								success: true,
+								email: "Sent it! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
+							});
+						}
+					});
+				})
+				.catch(err => console.log(err));
+		}
+		else{
+			return res.status(400).json({email: "The email address is not exist"});
+		}
+	});
+});
+
+router.post("/dochangepassword", (req, res) => {
+	ResetPending.findOne({key: req.body.key}).then(pending => {
+		if(pending){
+			const t1 = pending.pended_at;
+			const t2 = new Date(Date.now());
+			const diff = t2.getTime() - t1.getTime() - config.PENDING_EXPIRATION; // in milliseconds
+			if(diff > 0){ // if expired
+				// remove it from pending list.
+				pending.remove();
+
+				// and send "expired" message.
+				return res.status(400).json({error: `Your request is expired ${Math.round(diff / 1000)} seconds ago.`});
+			}
+			else{
+				// Now, gonna reset the password.
+				User.findOne({email: pending.email}).then(usr => { // find a user related to this pending
+					if(usr){ // if existed
+						console.log(pending.email, usr.fname, usr.lname);
+						// preparing of new password
+						usr.password = req.body.password;
+
+						// hash it, then...
+						bcrypt.genSalt(10, (err, salt) => {
+							bcrypt.hash(usr.password, salt, (err, hash) => {
+								if(err){ // if errors, return with error.
+									return res.status(500).json({email: "Your password was not reset."});
+								}
+
+								// DO reset the password newly!
+								usr.password = hash; // ... with hashed value
+								usr.email_verified = true; // this email was verified.
+								usr.email_verified_at = new Date(Date.now());
+								usr
+									.save()
+									.then(() => {
+										// remove it from pending list.
+										const to_email = pending.email;
+										pending.remove();
+
+										// return with "success" message.
+										return res.status(400).json({
+											success: true,
+											error: `You did it! You can use new password now.`
+										});
+									})
+									.catch(err => res.status(400).json({error: `Error: '${err}'.`}));
+							});
+						});
+					}
+					else{
+						return res.status(500).json({error: "Oh, no. Your password was not reset."});
+					}
+				});
+			}
+		}
+		else{
+			return res.status(400).json({error: "Oh, no. Your request is invalid."});
+		}
+	});
+});
 
 module.exports = router;

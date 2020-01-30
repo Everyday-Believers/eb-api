@@ -1,18 +1,16 @@
+const config = require("../config");
 const nodemailer = require("nodemailer");
 
 /**
  * mailer for forgot-password and others
  */
 const fycmailer = nodemailer.createTransport({
-	/**
-	 * This fake account was generated on https://ethereal.email/ for testing purposes.
-	 */
-	name: 'smtp.ethereal.email',
-	host: 'smtp.ethereal.email',
-	port: 587,
+	name: config.MAIL_HOST,
+	host: config.MAIL_HOST,
+	port: config.MAIL_PORT,
 	auth: {
-		user: 'jared.lynch@ethereal.email',
-		pass: 'w64kSZHEyyGkTfJtaz'
+		user: config.MAIL_USER,
+		pass: config.MAIL_PASS,
 	},
 	// debug: true,
 	// logger: true

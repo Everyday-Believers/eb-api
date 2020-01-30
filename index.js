@@ -8,6 +8,7 @@ const passport = require("passport");
 const users = require("./routes/users");
 const communities = require("./routes/communities");
 const stripepay = require("./routes/stripe-pay");
+const testroute = require("./routes/test-route");
 
 app.use(cors({	origin: "*",
 }));
@@ -26,7 +27,7 @@ app.use(
 
 // Connect to MongoDB
 mongoose
-	.connect(MONGO_URL, {useNewUrlParser: true})
+	.connect(MONGO_URL, {useNewUrlParser: true, useUnifiedTopology: true})
 	.then(() => console.log("MongoDB successfully connected"))
 	.catch(err => console.log(err));
 
@@ -40,6 +41,7 @@ require("./utils/passport")(passport);
 app.use("/api/users", users);
 app.use("/api/communities", communities);
 app.use("/api/stripe", stripepay);
+app.use("/api/test", testroute);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server up and running on port ${port} !`));

@@ -5,49 +5,47 @@ const User = require("../models/User");
 const stripe = require('stripe')(config.STRIPE_SK);
 
 /**
- * create customer
- *
- * req.body.
+ * get stripe status
  */
-router.post("/createcustomer", async (req, res) => {
+router.post("/getstatus", async (req, res) => {
 	const holder_email = req.body.email;
 
-	const customer = await stripe.customers.create({...req.body});
-
-	console.log(customer);
-
-	User.findOne({email: holder_email}).then(user => {
+	User.findOne({email: holder_email}).then(async (user) => {
 		if(user){
-			user.billing_info = customer;
-			user
-				.save()
-				.then(() => {
-					// Ok, created user was saved in database.
-					return res.status(200).json({billing: "The email address is not exist."});
-				})
-				.catch(err => res.status(500).json({error: `Error: '${err}'.`}));
+			if(user.billing_info){
+				// get the subscriptions related to this customer.
+				const my_subscriptions = await stripe.subscriptions.list({
+					limit: 1,
+					customer: user.billing_info.id,
+					plan: config.SUBSCRIBER_MONTHLY_PLAN,
+					status: "active",
+				});
+
+				const uc_invoice = await stripe.invoices.retrieveUpcoming({
+					customer: user.billing_info.id,
+				});
+
+				return res.status(200).json({
+					customer: user.billing_info,
+					subscription: my_subscriptions.data[0].items.data[0],
+					upcoming_invoice: uc_invoice,
+				});
+			}
+			else{
+				return res.status(200).json({
+					customer: null,
+					subscription: null,
+					upcoming_invoice: null,
+				});
+			}
 		}
 		else{
+			/**
+			 * We would not be arriving here, newer! Because we use an appropriate auth email.
+			 */
 			return res.status(500).json({billing: "The email address is not exist."});
 		}
 	});
-});
-
-/**
- * received the request to create a subscription from client.
- */
-router.post("/createsub", async (req, res) => {
-	const subscription = await stripe.subscriptions.create({
-		customer: 'cus_5111231234',
-
-	});
-});
-
-/**
- * received the request to update a subscription from client.
- */
-router.post("/updatesub", (req, res) => {
-
 });
 
 module.exports = router;

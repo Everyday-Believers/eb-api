@@ -56,7 +56,17 @@ const UserSchema = new Schema({
 	billing_info: { // customer object, which includes the subscriptions and more created from stripe customer.create()
 		type: Object,
 		required: false,
-	}
+	},
+	tickets: {
+		type: Number,
+		required: false,
+		default: 0,
+	},
+	ticket_expiry: {
+		type: Date,
+		required: false,
+		default: null,
+	},
 });
 
 module.exports = User = mongoose.model("users", UserSchema);
