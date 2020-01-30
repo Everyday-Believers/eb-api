@@ -105,6 +105,7 @@ router.post("/login", (req, res) => {
 					fname: user.fname,
 					lname: user.lname,
 					email: user.email,
+					phone: user.phone,
 					p_len: user.password.length, // is password's length for displaying on UI (FE).
 					ref_code: user.ref_code,
 					registered_at: user.registered_at,
@@ -407,6 +408,33 @@ router.post("/update", (req, res) => {
 									return res.status(500).json({msg_password: "Database error."});
 								});
 						});
+					});
+				}
+			}
+			else if(req.body.phone !== undefined){
+				if(isEmpty(req.body.phone)){
+					return res.status(400).json({msg_phone: "You entered empty value."});
+				}
+				else if(user.phone === req.body.phone){
+					return res.status(200).json({msg_phone: "Not modified!"});
+				}
+				else{
+					User.findOne({phone: req.body.phone}).then(usr => {
+						if(usr){
+							return res.status(400).json({msg_phone: "The phone number was duplicated with other."});
+						}
+						else{
+							user.phone = req.body.phone;
+							user
+								.save()
+								.then(() => {
+									// modified
+									return res.status(200).json({msg_phone: "Modified!"});
+								})
+								.catch(() => {
+									return res.status(500).json({msg_phone: "Database error."});
+								});
+						}
 					});
 				}
 			}

@@ -25,6 +25,10 @@ const UserSchema = new Schema({
 		type: Date,
 		default: null,
 	},
+	phone: {
+		type: String,
+		required: false,
+	},
 	password: {
 		type: String,
 		required: false,
