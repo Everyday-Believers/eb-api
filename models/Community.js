@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
  * Community schema
  */
 const CommunitySchema = new Schema({
-	owner_email: {
+	owner_id: {
 		type: String,
 		required: true,
 	},

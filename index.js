@@ -10,7 +10,8 @@ const communities = require("./routes/communities");
 const stripepay = require("./routes/stripe-pay");
 const testroute = require("./routes/test-route");
 
-app.use(cors({	origin: "*",
+app.use(cors({
+	origin: "*",
 }));
 
 // Body-parser middleware

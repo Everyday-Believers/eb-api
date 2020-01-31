@@ -8,9 +8,7 @@ const stripe = require('stripe')(config.STRIPE_SK);
  * get stripe status
  */
 router.post("/getstatus", async (req, res) => {
-	const holder_email = req.body.email;
-
-	User.findOne({email: holder_email}).then(async (user) => {
+	User.findOne({_id: req.body.user_id}).then(async (user) => {
 		if(user){
 			if(user.billing_info){
 				// get the subscriptions related to this customer.
@@ -23,17 +21,26 @@ router.post("/getstatus", async (req, res) => {
 
 				const uc_invoice = await stripe.invoices.retrieveUpcoming({
 					customer: user.billing_info.id,
-				});
-
-				return res.status(200).json({
-					customer: user.billing_info,
-					subscription: my_subscriptions.data[0].items.data[0],
-					upcoming_invoice: uc_invoice,
+				}, function(err, invo){
+					if(err){
+						return res.status(200).json({
+							tickets: user.tickets ? user.tickets : 0,
+							subscription: my_subscriptions.data.length > 0 ? my_subscriptions.data[0].items.data[0] : null,
+							upcoming_invoice: null,
+						});
+					}
+					else{
+						return res.status(200).json({
+							tickets: user.tickets ? user.tickets : 0,
+							subscription: my_subscriptions.data.length > 0 ? my_subscriptions.data[0].items.data[0] : null,
+							upcoming_invoice: invo,
+						});
+					}
 				});
 			}
 			else{
 				return res.status(200).json({
-					customer: null,
+					tickets: 0,
 					subscription: null,
 					upcoming_invoice: null,
 				});
@@ -43,7 +50,7 @@ router.post("/getstatus", async (req, res) => {
 			/**
 			 * We would not be arriving here, newer! Because we use an appropriate auth email.
 			 */
-			return res.status(500).json({billing: "The email address is not exist."});
+			return res.status(500).json({billing: "The user not found."});
 		}
 	});
 });

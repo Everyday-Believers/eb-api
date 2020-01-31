@@ -13,7 +13,15 @@ const UserSchema = new Schema({
 		type: String,
 		required: true,
 	},
-	email: { // after verified, it is not able to be changed. or not?
+	admin_email: { // just for displaying on admin panel.
+		type: String,
+		required: false,
+	},
+	phone: {
+		type: String,
+		required: false,
+	},
+	email: { // for login. in user info
 		type: String,
 		required: true,
 	},
@@ -25,11 +33,11 @@ const UserSchema = new Schema({
 		type: Date,
 		default: null,
 	},
-	phone: {
+	password: {
 		type: String,
 		required: false,
 	},
-	password: {
+	ref_code: {
 		type: String,
 		required: false,
 	},
@@ -42,18 +50,6 @@ const UserSchema = new Schema({
 		required: false,
 	},
 	facebook_id: {
-		type: String,
-		required: false,
-	},
-	ref_code: {
-		type: String,
-		required: false,
-	},
-	billing_card: {
-		type: String,
-		required: false,
-	},
-	billing_zip_code: {
 		type: String,
 		required: false,
 	},

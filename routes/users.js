@@ -12,6 +12,7 @@ const validateLoginInput = require("../validation/login");
 // Load models
 const User = require("../models/User");
 const ResetPending = require("../models/ResetPending");
+const VerifyPending = require("../models/VerifyPending");
 // mailer
 const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
@@ -93,50 +94,66 @@ router.post("/login", (req, res) => {
 	User.findOne({email}).then(user => {
 		// Check if user exists
 		if(!user){
-			return res.status(404).json({emailnotfound: "Email not found"});
+			return res.status(400).json({msg: "Email not found"});
 		}
-		// Check password
-		bcrypt.compare(password, user.password).then(isMatch => {
-			if(isMatch){
-				// User matched
-				// Create JWT Payload
-				const payload = {
-					id: user.id,
-					fname: user.fname,
-					lname: user.lname,
-					email: user.email,
-					phone: user.phone,
-					p_len: user.password.length, // is password's length for displaying on UI (FE).
-					ref_code: user.ref_code,
-					registered_at: user.registered_at,
-					email_verified: user.email_verified,
-					email_verified_at: user.email_verified_at,
-					billing_card: user.billing_card,
-					billing_zip_code: user.billing_zip_code,
-					billing_info: user.billing_info,
-				};
+		else{
+			// Check password
+			bcrypt.compare(password, user.password).then(isMatch => {
+				if(isMatch){ // User matched
+					// Create JWT Payload
+					const payload = {
+						id: user.id,
+						registered_at: user.registered_at,
+					};
 
-				// Sign token
-				jwt.sign(
-					payload,
-					config.SECRET_KEY,
-					{
-						expiresIn: 31556926 // 1 year in seconds
-					},
-					(err, token) => {
-						res.json({
-							success: true,
-							token: "Bearer " + token
-						});
-					}
-				);
-			}
-			else{
-				return res
-					.status(400)
-					.json({passwordincorrect: "Password incorrect"});
-			}
-		});
+					// Sign token
+					jwt.sign(
+						payload,
+						config.SECRET_KEY,
+						{
+							expiresIn: 31556926 // 1 year in seconds
+						},
+						(err, token) => {
+							res.status(200).json({
+								msg: "welcome to FindYourChurch.org",
+								token: "Bearer " + token,
+							});
+						}
+					);
+				}
+				else{
+					return res.status(400).json({msg: "Password incorrect"});
+				}
+			});
+		}
+	});
+});
+
+/**
+ * get user info
+ * @req.body.user_id user id to get the information for.
+ */
+router.post("/userinfo", (req, res) => {
+	User.findOne({_id: req.body.user_id}, '-id -password -google_id -facebook_id -tickets -ticket_expiry').then(user => {
+		if(user){
+			VerifyPending.findOne({email: user.email}, '-_id -email -key').sort({pended_at: 'desc'}).then(pending => {
+				if(pending){
+					return res.status(200).json({
+						...user._doc,
+						pended_at: pending.pended_at,
+					});
+				}
+				else{
+					return res.status(200).json({
+						...user._doc,
+						pended_at: null,
+					});
+				}
+			});
+		}
+		else{
+			return res.status(404).json({msg_info: "The user not found."});
+		}
 	});
 });
 
@@ -150,7 +167,7 @@ router.post("/googlelogin", (req, res) => {
 		payload,
 		config.SECRET_KEY,
 		{
-			expiresIn: 31556926 // 1 year in seconds
+			expiresIn: 86400 // 1 day in seconds
 		},
 		(err, token) => {
 			res.json({
@@ -165,10 +182,10 @@ router.post("/resetpassword", (req, res) => {
 	// check the email's validation
 	let errors = {};
 	if(Validator.isEmpty(req.body.email)){
-		errors.email = "Email field is required";
+		errors.msg = "Email field is required";
 	}
 	else if(!Validator.isEmail(req.body.email)){
-		errors.email = "Email is invalid";
+		errors.msg = "Email is invalid";
 	}
 	if(!isEmpty(errors)){
 		return res.status(400).json(errors);
@@ -358,7 +375,7 @@ router.post("/doresetpassword", (req, res) => {
 router.post("/update", (req, res) => {
 	// req.body.
 
-	User.findOne({email: req.body.email}).then(user => {
+	User.findOne({_id: req.body.id}).then(user => {
 		if(user){
 			if(req.body.fname !== undefined){
 				if(isEmpty(req.body.fname)){
@@ -368,7 +385,7 @@ router.post("/update", (req, res) => {
 					return res.status(400).json({msg_name: "Invalid last name."});
 				}
 				else if(user.fname === req.body.fname && user.lname === req.body.lname){
-					return res.status(400).json({msg_name: "Your name has been not changed."});
+					return res.status(400).json({msg_name: "Your name was not changed."});
 				}
 
 				user.fname = req.body.fname;
@@ -382,6 +399,88 @@ router.post("/update", (req, res) => {
 					.catch(() => {
 						return res.status(500).json({msg_name: "Database error."});
 					});
+			}
+			else if(req.body.admin_email !== undefined){
+				if(isEmpty(req.body.admin_email)){
+					return res.status(400).json({msg_admin_email: "You entered empty value."});
+				}
+				else if(user.admin_email === req.body.admin_email){
+					return res.status(400).json({msg_admin_email: "Not modified!"});
+				}
+				else{
+					User.findOne({admin_email: req.body.admin_email}).then(usr => {
+						if(usr){
+							return res.status(400).json({msg_admin_email: "The email was already registered."});
+						}
+						else{
+							user.admin_email = req.body.admin_email;
+							user
+								.save()
+								.then(() => {
+									// modified
+									return res.status(200).json({msg_admin_email: "Modified!"});
+								})
+								.catch(() => {
+									return res.status(500).json({msg_admin_email: "Database error."});
+								});
+						}
+					});
+				}
+			}
+			else if(req.body.email !== undefined){
+				if(isEmpty(req.body.email)){
+					return res.status(400).json({msg_email: "You entered empty value."});
+				}
+				else if(user.email === req.body.email){
+					return res.status(400).json({msg_email: "Not modified!"});
+				}
+				else{
+					User.findOne({email: req.body.email}).then(usr => {
+						if(usr){
+							return res.status(400).json({msg_email: "The email was already registered."});
+						}
+						else{
+							user.email = req.body.email;
+							user.email_verified = false;
+							user
+								.save()
+								.then(() => {
+									// modified
+									return res.status(200).json({msg_email: "Modified!"});
+								})
+								.catch(() => {
+									return res.status(500).json({msg_email: "Database error."});
+								});
+						}
+					});
+				}
+			}
+			else if(req.body.phone !== undefined){
+				if(isEmpty(req.body.phone)){
+					return res.status(400).json({msg_phone: "You entered empty value."});
+				}
+				else if(user.phone === req.body.phone){
+					return res.status(200).json({msg_phone: "Not modified!"});
+				}
+				else{
+					User.findOne({phone: req.body.phone}).then(usr => {
+						if(usr){
+							return res.status(400).json({msg_phone: "The phone number was already registered."});
+						}
+						else{
+							user.phone = req.body.phone;
+							user
+								.save()
+								.then(() => {
+									// modified
+									return res.status(200).json({msg_phone: "Modified!"});
+								})
+								.catch(() => {
+									return res.status(500).json({msg_phone: "Database error."});
+								});
+						}
+					});
+				}
 			}
 			else if(req.body.password !== undefined){
 				if(isEmpty(req.body.password)){
@@ -411,39 +510,15 @@ router.post("/update", (req, res) => {
 					});
 				}
 			}
-			else if(req.body.phone !== undefined){
-				if(isEmpty(req.body.phone)){
-					return res.status(400).json({msg_phone: "You entered empty value."});
-				}
-				else if(user.phone === req.body.phone){
-					return res.status(200).json({msg_phone: "Not modified!"});
-				}
-				else{
-					User.findOne({phone: req.body.phone}).then(usr => {
-						if(usr){
-							return res.status(400).json({msg_phone: "The phone number was duplicated with other."});
-						}
-						else{
-							user.phone = req.body.phone;
-							user
-								.save()
-								.then(() => {
-									// modified
-									return res.status(200).json({msg_phone: "Modified!"});
-								})
-								.catch(() => {
-									return res.status(500).json({msg_phone: "Database error."});
-								});
-						}
-					});
-				}
-			}
 			else if(req.body.ref_code !== undefined){
 				if(isEmpty(req.body.ref_code)){
 					return res.status(400).json({msg_ref_code: "You entered empty value."});
 				}
 				else if(user.ref_code === req.body.ref_code){
-					return res.status(200).json({msg_ref_code: "Not modified!"});
+					return res.status(400).json({msg_ref_code: "Not modified!"});
+				}
+				else if(req.body.ref_code.length < 6){
+					return res.status(400).json({msg_ref_code: "Must be at least 6 characters."});
 				}
 				else{
 					User.findOne({ref_code: req.body.ref_code}).then(usr => {
@@ -465,46 +540,6 @@ router.post("/update", (req, res) => {
 					});
 				}
 			}
-			else if(req.body.billing_card !== undefined){
-				if(isEmpty(req.body.billing_card)){
-					return res.status(400).json({msg_billing_card: "You entered empty value."});
-				}
-				else if(user.billing_card === req.body.billing_card){
-					return res.status(200).json({msg_billing_card: "Not modified!"});
-				}
-				else{
-					user.billing_card = req.body.billing_card;
-					user
-						.save()
-						.then(() => {
-							// modified
-							return res.status(200).json({msg_billing_card: "Modified!"});
-						})
-						.catch(() => {
-							return res.status(500).json({msg_billing_card: "Database error."});
-						});
-				}
-			}
-			else if(req.body.billing_zip_code !== undefined){
-				if(isEmpty(req.body.billing_zip_code)){
-					return res.status(400).json({msg_billing_zip_code: "You entered empty value."});
-				}
-				else if(user.billing_zip_code === req.body.billing_zip_code){
-					return res.status(200).json({msg_billing_zip_code: "Not modified!"});
-				}
-				else{
-					user.billing_zip_code = req.body.billing_zip_code;
-					user
-						.save()
-						.then(() => {
-							// modified
-							return res.status(200).json({msg_billing_zip_code: "Modified!"});
-						})
-						.catch(() => {
-							return res.status(500).json({msg_billing_zip_code: "Database error."});
-						});
-				}
-			}
 		}
 		else{
 			return res.status(400).json({msg_email: "Sorry, your email was not registered."});
@@ -516,29 +551,25 @@ router.post("/changepassword", (req, res) => {
 	// check the email's validation
 	let errors = {};
 	if(Validator.isEmpty(req.body.email)){
-		errors.email = "Email field is required";
+		errors.msg = "Email address is required.";
 	}
 	else if(!Validator.isEmail(req.body.email)){
-		errors.email = "Email is invalid";
+		errors.msg = "Email is invalid.";
 	}
 	if(!isEmpty(errors)){
 		return res.status(400).json(errors);
 	}
 
 	// generate new password
-	let user = {
-		link: config.FRONT_URL + '/changepassword/',
-	};
-	User.findOne({email: req.body.email}).then(usr => {
-		if(usr){
-			user.fname = usr.fname;
-			const link_key = base64.encode(btoa(usr.fname + usr.lname) + btoa(usr.registered_at.toString()) + btoa(Date.now().toString()));
-			user.link += link_key;
+	User.findOne({email: req.body.email}).then(user => {
+		if(user){
+			const key = base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+			const password_link = config.FRONT_URL + '/changepassword/' + key;
 
 			// Add new pending to reset the password
 			const newPending = new ResetPending({
-				key: link_key,
-				email: req.body.email
+				key: key,
+				email: req.body.email,
 			});
 			newPending
 				.save()
@@ -547,12 +578,13 @@ router.post("/changepassword", (req, res) => {
 					const mailOptions = {
 						from: "FindYourChurch <dont-reply@findyourchurch.com>",
 						to: req.body.email,
-						subject: 'Please check this to change your information',
+						subject: 'FindYourChurch: Forgot password?',
 						html: `
-							<h2>Hi, ${user.fname}.</h2>
-							<h4>We received your request to change the password. You can continue it by clicking the following:</h4>
-							<p>
-								<a href="${user.link}">${user.link}</a>
+							<h2>Hi, ${user.fname}</h2>
+							<h4>We received your request to change the password.
+							 You can continue it by clicking the following:</h4>
+							<p style="max-width: 100%;">
+								<a href="${password_link}">${password_link}</a>
 							</p>
 						`
 					};
@@ -562,15 +594,13 @@ router.post("/changepassword", (req, res) => {
 						if(err){
 							console.log(`send mail failed: ${err}`);
 							return res.status(400).json({
-								success: false,
-								email: `Oops! ${err}`
+								msg: `Oops! ${err}`
 							});
 						}
 						else{
 							console.log("sent a mail.");
-							return res.status(400).json({
-								success: true,
-								email: "Sent it! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
+							return res.status(200).json({
+								msg: `Success! Click the link in the email we just sent you to create a new password for your account!`,
 							});
 						}
 					});
@@ -578,13 +608,146 @@ router.post("/changepassword", (req, res) => {
 				.catch(err => console.log(err));
 		}
 		else{
-			return res.status(400).json({email: "The email address is not exist"});
+			return res.status(400).json({msg: "The email address is not exist"});
 		}
 	});
 });
 
 router.post("/dochangepassword", (req, res) => {
-	ResetPending.findOne({key: req.body.key}).then(pending => {
+	if(req.body.password !== req.body.password2){
+		return res.status(400).json({msg: "Passwords mismatch!"});
+	}
+	else if(isEmpty(req.body.password)){
+		return res.status(400).json({msg: "Password cannot be empty."});
+	}
+	else{
+		ResetPending.findOne({key: req.body.key}).then(pending => {
+			if(pending){
+				const t1 = pending.pended_at;
+				const t2 = new Date(Date.now());
+				const diff = t2.getTime() - t1.getTime() - config.PENDING_EXPIRATION; // in milliseconds
+				if(diff > 0){ // if expired
+					// remove it from pending list.
+					pending.remove();
+
+					// and send "expired" message.
+					return res.status(400).json({msg: `Your request was expired ${Math.round(diff / 1000)} seconds ago.`});
+				}
+				else{
+					// Now, gonna reset the password.
+					User.findOne({email: pending.email}).then(user => { // find a user related to this pending
+						if(user){ // if existed
+							console.log(pending.email, user.fname, user.lname);
+							// preparing of new password
+							user.password = req.body.password;
+
+							// hash it, then...
+							bcrypt.genSalt(10, (err, salt) => {
+								bcrypt.hash(user.password, salt, (err, hash) => {
+									if(err){ // if errors, return with error.
+										return res.status(500).json({msg: "Has function was corrupted."});
+									}
+
+									// DO reset the password newly!
+									user.password = hash; // ... with hashed value
+									user.email_verified = true; // this email was verified.
+									user.email_verified_at = new Date(Date.now());
+									user
+										.save()
+										.then(() => {
+											// remove it from pending list.
+											pending.remove();
+
+											// return with "success" message.
+											return res.status(200).json({
+												msg: `Success! Your password has been changed. Sign in now.`,
+											});
+										})
+										.catch(err => res.status(400).json({msg: `Error: '${err}'.`}));
+								});
+							});
+						}
+						else{
+							return res.status(500).json({msg: "Oh, no. Unknown internal server error."});
+						}
+					});
+				}
+			}
+			else{
+				return res.status(400).json({msg: "Oops, your request is invalid."});
+			}
+		});
+	}
+});
+
+router.post("/verifyemail", (req, res) => {
+	// check the email's validation
+	let errors = {};
+	if(Validator.isEmpty(req.body.email)){
+		errors.msg_verify = "What do you want to verify?";
+	}
+	else if(!Validator.isEmail(req.body.email)){
+		errors.msg_verify = "Email is invalid.";
+	}
+	if(!isEmpty(errors)){
+		return res.status(400).json(errors);
+	}
+
+	// generate new password
+	User.findOne({email: req.body.email}).then(user => {
+		if(user){
+			const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+			const verify_link = config.FRONT_URL + '/verifyemail/' + key;
+
+			// Add new pending to reset the password
+			const newPending = new VerifyPending({
+				key: key,
+				email: req.body.email,
+			});
+			newPending
+				.save()
+				.then(() => {
+					// preparing the mail contents...
+					const mailOptions = {
+						from: "FindYourChurch <dont-reply@findyourchurch.com>",
+						to: req.body.email,
+						subject: 'FindYourChurch: Verify your email please.',
+						html: `
+							<h2>Hi, ${user.fname}</h2>
+							<h4>Thank you for verification</h4>
+							To continue, just click:
+							<p style="max-width: 100%;">
+								<a href="${verify_link}">${verify_link}</a>
+							</p>
+						`
+					};
+
+					// send it!
+					fycmailer.sendMail(mailOptions, function(err, info){
+						if(err){
+							console.log(`send mail failed: ${err}`);
+							return res.status(400).json({
+								msg_verify: `Oops! ${err}`
+							});
+						}
+						else{
+							console.log("sent a mail.");
+							return res.status(200).json({
+								msg_verify: `Success! Click the link in the email we just sent you to verify your email!`,
+							});
+						}
+					});
+				})
+				.catch(err => console.log(err));
+		}
+		else{
+			return res.status(400).json({msg_verify: "The email address is not exist"});
+		}
+	});
+});
+
+router.post("/doverifyemail", (req, res) => {
+	VerifyPending.findOne({key: req.body.key}).then(pending => {
 		if(pending){
 			const t1 = pending.pended_at;
 			const t2 = new Date(Date.now());
@@ -594,52 +757,35 @@ router.post("/dochangepassword", (req, res) => {
 				pending.remove();
 
 				// and send "expired" message.
-				return res.status(400).json({error: `Your request is expired ${Math.round(diff / 1000)} seconds ago.`});
+				return res.status(400).json({msg_verify: `Your request was expired ${Math.round(diff / 1000)} seconds ago.`});
 			}
 			else{
 				// Now, gonna reset the password.
-				User.findOne({email: pending.email}).then(usr => { // find a user related to this pending
-					if(usr){ // if existed
-						console.log(pending.email, usr.fname, usr.lname);
-						// preparing of new password
-						usr.password = req.body.password;
+				User.findOne({email: pending.email}).then(user => { // find a user related to this pending
+					if(user){ // if existed
+						user.email_verified = true;
+						user.email_verified_at = new Date(Date.now());
+						user
+							.save()
+							.then(() => {
+								// remove it from pending list.
+								pending.remove();
 
-						// hash it, then...
-						bcrypt.genSalt(10, (err, salt) => {
-							bcrypt.hash(usr.password, salt, (err, hash) => {
-								if(err){ // if errors, return with error.
-									return res.status(500).json({email: "Your password was not reset."});
-								}
-
-								// DO reset the password newly!
-								usr.password = hash; // ... with hashed value
-								usr.email_verified = true; // this email was verified.
-								usr.email_verified_at = new Date(Date.now());
-								usr
-									.save()
-									.then(() => {
-										// remove it from pending list.
-										const to_email = pending.email;
-										pending.remove();
-
-										// return with "success" message.
-										return res.status(400).json({
-											success: true,
-											error: `You did it! You can use new password now.`
-										});
-									})
-									.catch(err => res.status(400).json({error: `Error: '${err}'.`}));
-							});
-						});
+								// return with "success" message.
+								return res.status(200).json({
+									msg_verify: `Success! Your email has been verified.`,
+								});
+							})
+							.catch(err => res.status(400).json({msg_verify: `Error: '${err}'.`}));
 					}
 					else{
-						return res.status(500).json({error: "Oh, no. Your password was not reset."});
+						return res.status(500).json({msg_verify: "Oh, no. Unknown internal server error."});
 					}
 				});
 			}
 		}
 		else{
-			return res.status(400).json({error: "Oh, no. Your request is invalid."});
+			return res.status(400).json({msg_verify: "Oops, your request is invalid."});
 		}
 	});
 });

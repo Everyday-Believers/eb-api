@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 /**
- * DB schema - request pending for forgot-password
+ * DB schema - request pending for email-verification
  */
-const ResetPendingSchema = new Schema({
+const VerifyPendingSchema = new Schema({
 	/**
 	 * guessing-free key for arbitrary URL
 	 */
@@ -14,7 +14,7 @@ const ResetPendingSchema = new Schema({
 	},
 
 	/**
-	 * email of user who request to reset password.
+	 * email to verify.
 	 */
 	email: {
 		type: String,
@@ -22,7 +22,7 @@ const ResetPendingSchema = new Schema({
 	},
 
 	/**
-	 * pending date for calculation of expiry.
+	 * pended date for calculation of expiry.
 	 */
 	pended_at: {
 		type: Date,
@@ -30,4 +30,4 @@ const ResetPendingSchema = new Schema({
 	},
 });
 
-module.exports = ResetPending = mongoose.model("resetpendings", ResetPendingSchema);
+module.exports = VerifyPending = mongoose.model("verifypendings", VerifyPendingSchema);

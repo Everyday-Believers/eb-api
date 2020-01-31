@@ -15,9 +15,9 @@ router.post("/create", (req, res) => {
 	const community_info = req.body.data;
 
 	// check the validation of (community_name, category, address)
-	if(isEmpty(community_info.owner_email)){
+	if(isEmpty(community_info.owner_id)){
 		return res.status(400).json({
-			msg_community: "Oops, is that community orphan?"
+			msg_community: "Oops, this error message must be shown."
 		});
 	}
 	else if(isEmpty(community_info.community_name) || isEmpty(community_info.category) || isEmpty(community_info.address)){
@@ -144,7 +144,7 @@ router.post("/setcard", async (req, res) => {
 					return res.status(500).json({billing: "No billing information."});
 				}
 			}
-			// if exist, change ti with token information
+			// if exist, change it with token information
 			else{
 				const new_card = await stripe.customers.createSource(
 					user.billing_info.id, // customer
@@ -195,7 +195,7 @@ router.post("/setcard", async (req, res) => {
  * @res.body.customer from stripe.com
  */
 router.post("/activate", async (req, res) => {
-	User.findOne({email: req.body.email}).then(async (user) => {
+	User.findOne({_id: req.body.id}).then(async (user) => {
 		if(user){
 			if(user.billing_info === undefined){
 				/**
@@ -238,7 +238,7 @@ router.post("/activate", async (req, res) => {
 				 * 3. with customer info (by step 1 or 2), get a subscription, which is one of active subscriptions, from stripe.com. must plus 1 to it's quantity.
 				 * (now, can use "user.billing_info.id" as customer info.)
 				 */
-				Community.find({owner_email: req.body.email, activated: true}).then(async mines => {
+				Community.find({owner_id: req.body.id, activated: true}).then(async mines => {
 					// get number of activated communities.
 					const num_act_comms = mines.length;
 					let subscription = null;
@@ -260,11 +260,13 @@ router.post("/activate", async (req, res) => {
 								console.log("Updated: ", subscription.id);
 
 								// get a ticket instead of refunding.
-								let i = 1;
 								const init_date = new Date(subscription.created * 1000);
-								let next_due_date = init_date;
 								const to_date = new Date();
+								let prev_due_date = init_date;
+								let next_due_date = getNextMonth(init_date, 1).date;
+								let i = 2;
 								while(next_due_date.getTime() < to_date.getTime()){
+									prev_due_date = next_due_date;
 									next_due_date = getNextMonth(init_date, i).date;
 									i++;
 								}
@@ -285,12 +287,13 @@ router.post("/activate", async (req, res) => {
 								}
 								user.save().then().catch(err => console.log(err));
 
+								console.log(real_qty);
 								if(real_qty > 0){
-									// get next due date.
-									const date_obj = getNextMonth(next_due_date, -1);
+									// get current billing cycle
+									const diff = getDateDiff(prev_due_date, next_due_date);
 
 									// calculate the proration from reminder days.
-									const proration = getDateDiff(new Date(), next_due_date) / (-date_obj.diff);
+									const proration = getDateDiff(new Date(), next_due_date) / (diff);
 
 									// and amount for reminder of cycle.
 									const amount = Math.round(real_qty * proration * subscription.plan.amount);
@@ -429,7 +432,7 @@ router.post("/activate", async (req, res) => {
  * deactivate the community
  */
 router.post("/deactivate", (req, res) => {
-	User.findOne({email: req.body.email}).then(async (user) => {
+	User.findOne({_id: req.body.id}).then(async (user) => {
 		if(user){
 			/**
 			 * 1. if inputted token.id is null, use the existing customer saved in db.
@@ -443,7 +446,6 @@ router.post("/deactivate", (req, res) => {
 							.then(async () => {
 								return res.status(200).json({
 									msg: "No data.",
-									customer: null,
 									subscription: null,
 									upcoming_invoice: null,
 								});
@@ -468,7 +470,7 @@ router.post("/deactivate", (req, res) => {
 				 * 3. with customer info (by step 1 or 2), get a subscription, which is one of active subscriptions, from stripe.com. must plus 1 to it's quantity.
 				 * (now, can use "user.billing_info.id" as customer info.)
 				 */
-				Community.find({owner_email: req.body.email, activated: true}).then(async mines => {
+				Community.find({owner_id: req.body.id, activated: true}).then(async mines => {
 					const num_act_comms = mines.length;
 					let subscription = null;
 					if(my_subscriptions.data.length > 0){
@@ -539,7 +541,6 @@ router.post("/deactivate", (req, res) => {
 											else{
 												return res.status(200).json({
 													msg: "A community was deactivated.",
-													customer: user.billing_info,
 													subscription: subscription,
 													upcoming_invoice: invoice,
 												});
