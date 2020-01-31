@@ -401,6 +401,7 @@ router.post("/activate", async (req, res) => {
 												else{
 													return res.status(200).json({
 														msg: "A community was activated successfully.",
+														tickets: user.tickets,
 														customer: user.billing_info,
 														subscription: subscription,
 														last_invoice: last_invoice,
