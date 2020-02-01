@@ -297,24 +297,22 @@ router.post("/activate", async (req, res) => {
 								user.save().then().catch(err => console.log(err));
 
 								console.log(real_qty);
-								if(real_qty > 0){
-									// get current billing cycle
-									const diff = getDateDiff(prev_due_date, next_due_date);
+								// get current billing cycle
+								const diff = getDateDiff(prev_due_date, next_due_date);
 
-									// calculate the proration from reminder days.
-									const proration = getDateDiff(new Date(), next_due_date) / (diff);
+								// calculate the proration from reminder days.
+								const proration = subscription.status === "trialing" ? 0 : getDateDiff(new Date(), next_due_date) / (diff);
 
-									// and amount for reminder of cycle.
-									const amount = Math.round(real_qty * proration * subscription.plan.amount);
+								// and amount for reminder of cycle.
+								const amount = Math.round(real_qty * proration * subscription.plan.amount);
 
-									// create invoice item for reminder
-									const invo_item = await stripe.invoiceItems.create({
-										customer: user.billing_info.id,
-										amount: amount, // 5$ for 15 days.
-										currency: 'usd',
-										description: `One-off invoice for reminder. qty: ${real_qty}`,
-									});
-								}
+								// create invoice item for reminder
+								const invo_item = await stripe.invoiceItems.create({
+									customer: user.billing_info.id,
+									amount: amount, // 5$ for 15 days.
+									currency: 'usd',
+									description: `One-off invoice for reminder. qty: ${real_qty}`,
+								});
 
 								// and delete all the items containing "Remaining" or "Unused".
 								const invoices_to_delete = await stripe.invoiceItems.list({
@@ -334,17 +332,21 @@ router.post("/activate", async (req, res) => {
 									}
 								}
 
-								if(real_qty > 0){
-									// Create one-off invoice from the existing invoice items.
-									last_invoice = await stripe.invoices.create({
+								// Create one-off invoice from the existing invoice items.
+								last_invoice = await stripe.invoices.create({
 										customer: user.billing_info.id,
 										auto_advance: true,
-									});
+									},
+									async function(err, invo){
+										if(err){
 
-									// Prepare to pay by finalizing the created invoice.
-									await stripe.invoices.finalizeInvoice(last_invoice.id);
-									console.log("One-off invoice: ", last_invoice.id);
-								}
+										}
+										else{
+											// Prepare to pay by finalizing the created invoice.
+											await stripe.invoices.finalizeInvoice(invo.id);
+											console.log("One-off invoice: ", invo.id);
+										}
+									});
 							}
 							else{
 								is_error = true;
