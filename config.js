@@ -1,4 +1,5 @@
 module.exports = {
+	TRIAL_PERIOD: 7, // free trial period
 	PENDING_EXPIRATION: 300000, // in milliseconds
 	PASSWORD_LENGTH: 20, // length of generated password
 

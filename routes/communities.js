@@ -227,12 +227,21 @@ router.post("/activate", async (req, res) => {
 
 			if(user.billing_info !== undefined){
 				// get the subscriptions related to this customer.
-				const my_subscriptions = await stripe.subscriptions.list({
+				let my_subscriptions = await stripe.subscriptions.list({
 					limit: 1,
 					customer: user.billing_info.id,
 					plan: config.SUBSCRIBER_MONTHLY_PLAN,
 					status: "active",
 				});
+
+				if(my_subscriptions.data.length === 0){
+					my_subscriptions = await stripe.subscriptions.list({
+						limit: 1,
+						customer: user.billing_info.id,
+						plan: config.SUBSCRIBER_MONTHLY_PLAN,
+						status: "trialing",
+					});
+				}
 
 				/**
 				 * 3. with customer info (by step 1 or 2), get a subscription, which is one of active subscriptions, from stripe.com. must plus 1 to it's quantity.
@@ -260,7 +269,7 @@ router.post("/activate", async (req, res) => {
 								console.log("Updated: ", subscription.id);
 
 								// get a ticket instead of refunding.
-								const init_date = new Date(subscription.created * 1000);
+								const init_date = new Date(subscription.billing_cycle_anchor * 1000);
 								const to_date = new Date();
 								let prev_due_date = init_date;
 								let next_due_date = getNextMonth(init_date, 1).date;
@@ -348,6 +357,7 @@ router.post("/activate", async (req, res) => {
 					else{
 						subscription = await stripe.subscriptions.create({
 							customer: user.billing_info.id,
+							trial_period_days: config.TRIAL_PERIOD,
 							items: [{
 								plan: config.SUBSCRIBER_MONTHLY_PLAN,
 							}],
@@ -460,12 +470,21 @@ router.post("/deactivate", (req, res) => {
 			}
 			else{
 				// get the subscriptions related to this customer.
-				const my_subscriptions = await stripe.subscriptions.list({
+				let my_subscriptions = await stripe.subscriptions.list({
 					limit: 1,
 					customer: user.billing_info.id,
 					plan: config.SUBSCRIBER_MONTHLY_PLAN,
 					status: "active",
 				});
+
+				if(my_subscriptions.data.length === 0){
+					my_subscriptions = await stripe.subscriptions.list({
+						limit: 1,
+						customer: user.billing_info.id,
+						plan: config.SUBSCRIBER_MONTHLY_PLAN,
+						status: "trialing",
+					});
+				}
 
 				/**
 				 * 3. with customer info (by step 1 or 2), get a subscription, which is one of active subscriptions, from stripe.com. must plus 1 to it's quantity.
@@ -486,7 +505,7 @@ router.post("/deactivate", (req, res) => {
 
 							// get a ticket instead of refunding.
 							let i = 1;
-							const init_date = new Date(subscription.created * 1000);
+							const init_date = new Date(subscription.billing_cycle_anchor * 1000);
 							let next_due_date = init_date;
 							const to_date = new Date();
 							while(next_due_date.getTime() < to_date.getTime()){

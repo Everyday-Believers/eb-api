@@ -12,31 +12,47 @@ router.post("/getstatus", async (req, res) => {
 		if(user){
 			if(user.billing_info){
 				// get the subscriptions related to this customer.
-				const my_subscriptions = await stripe.subscriptions.list({
+				let trialing = false;
+				let my_subscriptions = await stripe.subscriptions.list({
 					limit: 1,
 					customer: user.billing_info.id,
 					plan: config.SUBSCRIBER_MONTHLY_PLAN,
 					status: "active",
 				});
 
-				const uc_invoice = await stripe.invoices.retrieveUpcoming({
-					customer: user.billing_info.id,
-				}, function(err, invo){
-					if(err){
-						return res.status(200).json({
-							tickets: user.tickets ? user.tickets : 0,
-							subscription: my_subscriptions.data.length > 0 ? my_subscriptions.data[0].items.data[0] : null,
-							upcoming_invoice: null,
-						});
-					}
-					else{
-						return res.status(200).json({
-							tickets: user.tickets ? user.tickets : 0,
-							subscription: my_subscriptions.data.length > 0 ? my_subscriptions.data[0].items.data[0] : null,
-							upcoming_invoice: invo,
-						});
-					}
-				});
+				if(my_subscriptions.data.length === 0){
+					my_subscriptions = await stripe.subscriptions.list({
+						limit: 1,
+						customer: user.billing_info.id,
+						plan: config.SUBSCRIBER_MONTHLY_PLAN,
+						status: "trialing",
+					});
+
+					trialing = true;
+				}
+
+				if(my_subscriptions.data.length > 0){
+					const uc_invoice = await stripe.invoices.retrieveUpcoming({
+						customer: user.billing_info.id,
+					}, function(err, invo){
+						if(err){
+							return res.status(200).json({
+								tickets: user.tickets ? user.tickets : 0,
+								subscription: my_subscriptions.data.length > 0 ? my_subscriptions.data[0] : null,
+								upcoming_invoice: null,
+								trialing: trialing,
+							});
+						}
+						else{
+							return res.status(200).json({
+								tickets: user.tickets ? user.tickets : 0,
+								subscription: my_subscriptions.data.length > 0 ? my_subscriptions.data[0] : null,
+								upcoming_invoice: invo,
+								trialing: trialing,
+							});
+						}
+					});
+				}
 			}
 			else{
 				return res.status(200).json({

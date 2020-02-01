@@ -589,6 +589,10 @@ router.post("/changepassword", (req, res) => {
 						`
 					};
 
+					res.status(200).json({
+						msg: `Success! Click the link in the email we just sent you to create a new password for your account!`,
+					});
+
 					// send it!
 					fycmailer.sendMail(mailOptions, function(err, info){
 						if(err){
@@ -599,9 +603,6 @@ router.post("/changepassword", (req, res) => {
 						}
 						else{
 							console.log("sent a mail.");
-							return res.status(200).json({
-								msg: `Success! Click the link in the email we just sent you to create a new password for your account!`,
-							});
 						}
 					});
 				})
