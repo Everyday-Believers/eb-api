@@ -197,6 +197,49 @@ router.post("/setcard", async (req, res) => {
 router.post("/activate", async (req, res) => {
 	User.findOne({_id: req.body.id}).then(async (user) => {
 		if(user){
+			if(req.body.source){
+				let is_error = false;
+				// if no billing in db, create it.
+				if(user.billing_info === undefined){
+					user.billing_info = await stripe.customers.create({
+						source: req.body.source,
+						email: req.body.email,
+						name: req.body.name,
+						description: req.body.description,
+					});
+					user
+						.save()
+						.then(() => {
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
+				}
+				// if exist, change it with token information
+				else{
+					const new_card = await stripe.customers.createSource(
+						user.billing_info.id, // customer
+						{
+							source: req.body.source,
+						}
+					);
+
+					user.billing_info = await stripe.customers.update(
+						user.billing_info.id, // customer
+						{
+							default_source: new_card.id,
+						}
+					);
+					user
+						.save()
+						.then(() => {
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
+				}
+			}
+
 			if(user.billing_info === undefined){
 				/**
 				 * 1. if inputted token.id is null, use the existing customer saved in db.
