@@ -71,4 +71,17 @@ router.post("/getstatus", async (req, res) => {
 	});
 });
 
+router.post("/verifycoupon", async (req, res) => {
+	await stripe.coupons.retrieve(
+		req.body.code.trim(),
+		function(err, coupon){
+			if(err){
+				return res.status(200).json({verified: false});
+			}
+			else{
+				return res.status(200).json({verified: coupon.valid});
+			}
+		});
+});
+
 module.exports = router;

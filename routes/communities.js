@@ -360,6 +360,7 @@ router.post("/activate", async (req, res) => {
 						subscription = await stripe.subscriptions.create({
 							customer: user.billing_info.id,
 							trial_period_days: config.TRIAL_PERIOD,
+							coupon: req.body.coupon,
 							items: [{
 								plan: config.SUBSCRIBER_MONTHLY_PLAN,
 							}],
