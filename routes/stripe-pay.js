@@ -71,6 +71,19 @@ router.post("/getstatus", async (req, res) => {
 	});
 });
 
+router.post("/getplan", async (req, res) => {
+	await stripe.plans.retrieve(
+		config.SUBSCRIBER_MONTHLY_PLAN,
+		function(err, plan){
+			if(err){
+				return res.status(200).json({amount: 0, trial_period_days: 0});
+			}
+			else{
+				return res.status(200).json({amount: plan.amount, trial_period_days: plan.trial_period_days});
+			}
+		});
+});
+
 router.post("/verifycoupon", async (req, res) => {
 	console.log(req.body);
 	await stripe.coupons.retrieve(
