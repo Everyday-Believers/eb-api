@@ -72,11 +72,12 @@ router.post("/getstatus", async (req, res) => {
 });
 
 router.post("/verifycoupon", async (req, res) => {
+	console.log(req.body);
 	await stripe.coupons.retrieve(
 		req.body.code.trim(),
 		function(err, coupon){
 			if(err){
-				return res.status(200).json({verified: false});
+				return res.status(400).json({msg_coupon: err, verified: false});
 			}
 			else{
 				return res.status(200).json({verified: coupon.valid});

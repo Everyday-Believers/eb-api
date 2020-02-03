@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const isEmpty = require("is-empty");
+const bcrypt = require("bcryptjs");
 const btoa = require("btoa"); // hash
 const base64 = require("base-64"); // base64
 // Load input validators
 const Validator = require("validator");
+const isEmpty = require("is-empty");
 const validateRegisterInput = require("../validation/register");
 const validateLoginInput = require("../validation/login");
 // Load models
@@ -17,19 +17,22 @@ const VerifyPending = require("../models/VerifyPending");
 const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
 
-// @route POST api/users/register
-// @desc Register user
-// @access Public
+/**
+ * Register a user
+ *
+ * @route POST api/users/register
+ */
 router.post("/register", (req, res) => {
 	// Form validation
-	const {errors, isValid} = validateRegisterInput(req.body);
+	const {msg, isValid} = validateRegisterInput(req.body);
 	// Check validation
 	if(!isValid){
-		return res.status(400).json(errors);
+		return res.status(400).json({msg_register: msg});
 	}
+
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
-			return res.status(400).json({email: "Email already exists"});
+			return res.status(400).json({msg_register: "Email was already registered."});
 		}
 		else{
 			const newUser = new User({
@@ -45,7 +48,60 @@ router.post("/register", (req, res) => {
 					newUser.password = hash;
 					newUser
 						.save()
-						.then(user => res.json(user))
+						.then(user => {
+							// send a mail to verify
+							let error;
+							if(Validator.isEmpty(req.body.email)){
+								error = "What do you want to verify?";
+							}
+							else if(!Validator.isEmail(req.body.email)){
+								error = "Email is invalid.";
+							}
+							if(!isEmpty(error)){
+							}
+							else{
+								const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+								const verify_link = config.FRONT_URL + '/verify-email/' + key;
+
+								// Add new pending to reset the password
+								const newPending = new VerifyPending({
+									key: key,
+									email: req.body.email,
+								});
+								newPending
+									.save()
+									.then(() => {
+										// preparing the mail contents...
+										const mailOptions = {
+											from: "FindYourChurch <dont-reply@findyourchurch.com>",
+											to: req.body.email,
+											subject: 'FindYourChurch: Verify your email please.',
+											html: `
+												<h2>Hi, ${user.fname}</h2>
+												<h4>Thank you for signing up.</h4>
+												To continue, just click:
+												<p>
+													<a href="${verify_link}">${verify_link}</a>
+												</p>
+											`
+										};
+
+										res.status(200).json({
+											msg_register: "Success! Click the link in the email we just sent you to verify your email."
+										});
+
+										// send it!
+										fycmailer.sendMail(mailOptions, function(err, info){
+											if(err){
+											}
+											else{
+												console.log("Sent a mail to verify user email.")
+											}
+										});
+									})
+									.catch(err => console.log(err));
+							}
+						})
 						.catch(err => console.log(err));
 				});
 			});
@@ -77,15 +133,15 @@ router.post("/googleregister", (req, res) => {
 	});
 });
 
-// @route POST api/users/login
-// @desc Login user and return JWT token
-// @access Public
+/**
+ * Login
+ */
 router.post("/login", (req, res) => {
 	// Form validation
-	const {errors, isValid} = validateLoginInput(req.body);
+	const {msg, isValid} = validateLoginInput(req.body);
 	// Check validation
 	if(!isValid){
-		return res.status(400).json(errors);
+		return res.status(400).json({msg_login: msg});
 	}
 	const email = req.body.email;
 	const password = req.body.password;
@@ -94,7 +150,7 @@ router.post("/login", (req, res) => {
 	User.findOne({email}).then(user => {
 		// Check if user exists
 		if(!user){
-			return res.status(400).json({msg: "Email not found"});
+			return res.status(400).json({msg_login: "Email not found"});
 		}
 		else{
 			// Check password
@@ -103,6 +159,9 @@ router.post("/login", (req, res) => {
 					// Create JWT Payload
 					const payload = {
 						id: user.id,
+						fname: user.fname,
+						lname: user.lname,
+						email: user.email,
 						registered_at: user.registered_at,
 					};
 
@@ -122,7 +181,7 @@ router.post("/login", (req, res) => {
 					);
 				}
 				else{
-					return res.status(400).json({msg: "Password incorrect"});
+					return res.status(400).json({msg_login: "Password incorrect"});
 				}
 			});
 		}
@@ -134,9 +193,9 @@ router.post("/login", (req, res) => {
  * @req.body.user_id user id to get the information for.
  */
 router.post("/userinfo", (req, res) => {
-	User.findOne({_id: req.body.user_id}, '-id -password -google_id -facebook_id -tickets -ticket_expiry').then(user => {
+	User.findOne({_id: req.body.user_id}, '-password -google_id -facebook_id -tickets -ticket_expiry').then(user => {
 		if(user){
-			VerifyPending.findOne({email: user.email}, '-_id -email -key').sort({pended_at: 'desc'}).then(pending => {
+			VerifyPending.findOne({email: user.email}, '-email -key').sort({pended_at: 'desc'}).then(pending => {
 				if(pending){
 					return res.status(200).json({
 						...user._doc,
@@ -180,25 +239,25 @@ router.post("/googlelogin", (req, res) => {
 
 router.post("/resetpassword", (req, res) => {
 	// check the email's validation
-	let errors = {};
+	let msg = '';
 	if(Validator.isEmpty(req.body.email)){
-		errors.msg = "Email field is required";
+		msg = "Email field is required";
 	}
 	else if(!Validator.isEmail(req.body.email)){
-		errors.msg = "Email is invalid";
+		msg = "Email is invalid";
 	}
-	if(!isEmpty(errors)){
-		return res.status(400).json(errors);
+	if(!isEmpty(msg)){
+		return res.status(400).json({msg_reset: msg});
 	}
 
 	// generate new password
 	let user = {
-		link: config.FRONT_URL + '/reset/',
+		link: config.FRONT_URL + '/reset-password/',
 	};
 	User.findOne({email: req.body.email}).then(usr => {
 		if(usr){
 			user.fname = usr.fname;
-			const link_key = base64.encode(btoa(usr.fname + usr.lname) + btoa(usr.registered_at.toString()) + btoa(Date.now().toString()));
+			const link_key = base64.encode(btoa(usr.email) + btoa(usr.registered_at.toString()) + btoa(Date.now().toString()));
 			user.link += link_key;
 
 			// Add new pending to reset the password
@@ -227,24 +286,19 @@ router.post("/resetpassword", (req, res) => {
 					fycmailer.sendMail(mailOptions, function(err, info){
 						if(err){
 							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({
-								success: false,
-								email: `Oops! ${err}`
-							});
+							return res.status(400).json({msg_reset: err});
 						}
 						else{
 							console.log("sent a mail.");
-							return res.status(400).json({
-								success: true,
-								email: "Sent it! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
+							return res.status(200).json({
+								msg_reset: "Success! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
 							});
 						}
 					});
 				})
-				.catch(err => console.log(err));
 		}
 		else{
-			return res.status(400).json({email: "The email address is not exist"});
+			return res.status(400).json({msg_reset: "The email address is not exist"});
 		}
 	});
 });
@@ -254,7 +308,7 @@ router.post("/resetpassword", (req, res) => {
  *
  * @returns {string}
  */
-const generatePassword = () => {
+const generateRandomString = () => {
 	let result = '';
 	const char_set = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	const char_set_len = char_set.length;
@@ -285,7 +339,7 @@ router.post("/doresetpassword", (req, res) => {
 				User.findOne({email: pending.email}).then(usr => { // find a user related to this pending
 					if(usr){ // if existed
 						// preparing of new password
-						const new_password = generatePassword();
+						const new_password = generateRandomString();
 						usr.password = new_password;
 
 						// hash it, then...
@@ -404,6 +458,9 @@ router.post("/update", (req, res) => {
 				if(isEmpty(req.body.admin_email)){
 					return res.status(400).json({msg_admin_email: "You entered empty value."});
 				}
+				else if(!Validator.isEmail(req.body.admin_email)){
+					return res.status(400).json({msg_admin_email: "Invalid email"});
+				}
 				else if(user.admin_email === req.body.admin_email){
 					return res.status(400).json({msg_admin_email: "Not modified!"});
 				}
@@ -430,6 +487,9 @@ router.post("/update", (req, res) => {
 			else if(req.body.email !== undefined){
 				if(isEmpty(req.body.email)){
 					return res.status(400).json({msg_email: "You entered empty value."});
+				}
+				else if(!Validator.isEmail(req.body.email)){
+					return res.status(400).json({msg_email: "Invalid email"});
 				}
 				else if(user.email === req.body.email){
 					return res.status(400).json({msg_email: "Not modified!"});
@@ -458,6 +518,9 @@ router.post("/update", (req, res) => {
 			else if(req.body.phone !== undefined){
 				if(isEmpty(req.body.phone)){
 					return res.status(400).json({msg_phone: "You entered empty value."});
+				}
+				else if(!Validator.isMobilePhone(req.body.phone)){
+					return res.status(400).json({msg_phone: "Invalid phone number"});
 				}
 				else if(user.phone === req.body.phone){
 					return res.status(200).json({msg_phone: "Not modified!"});
@@ -549,22 +612,22 @@ router.post("/update", (req, res) => {
 
 router.post("/changepassword", (req, res) => {
 	// check the email's validation
-	let errors = {};
+	let msg = '';
 	if(Validator.isEmpty(req.body.email)){
-		errors.msg = "Email address is required.";
+		msg = "Email address is required.";
 	}
 	else if(!Validator.isEmail(req.body.email)){
-		errors.msg = "Email is invalid.";
+		msg = "Email is invalid.";
 	}
-	if(!isEmpty(errors)){
-		return res.status(400).json(errors);
+	if(!isEmpty(msg)){
+		return res.status(400).json({msg_change: msg});
 	}
 
 	// generate new password
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
 			const key = base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
-			const password_link = config.FRONT_URL + '/changepassword/' + key;
+			const password_link = config.FRONT_URL + '/change-password/' + key;
 
 			// Add new pending to reset the password
 			const newPending = new ResetPending({
@@ -590,16 +653,14 @@ router.post("/changepassword", (req, res) => {
 					};
 
 					res.status(200).json({
-						msg: `Success! Click the link in the email we just sent you to create a new password for your account!`,
+						msg_change: "Success! Click the link in the email we just sent you to create a new password for your account!"
 					});
 
 					// send it!
 					fycmailer.sendMail(mailOptions, function(err, info){
 						if(err){
 							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({
-								msg: `Oops! ${err}`
-							});
+							return res.status(400).json({msg_change: err});
 						}
 						else{
 							console.log("sent a mail.");
@@ -698,7 +759,7 @@ router.post("/verifyemail", (req, res) => {
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
 			const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
-			const verify_link = config.FRONT_URL + '/verifyemail/' + key;
+			const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
 			// Add new pending to reset the password
 			const newPending = new VerifyPending({
@@ -748,6 +809,7 @@ router.post("/verifyemail", (req, res) => {
 });
 
 router.post("/doverifyemail", (req, res) => {
+	console.log(req.body);
 	VerifyPending.findOne({key: req.body.key}).then(pending => {
 		if(pending){
 			const t1 = pending.pended_at;
@@ -774,7 +836,7 @@ router.post("/doverifyemail", (req, res) => {
 
 								// return with "success" message.
 								return res.status(200).json({
-									msg_verify: `Success! Your email has been verified.`,
+									msg_verify: `Success! Your email has been verified. Please sign in. If signed in, just continue please.`,
 								});
 							})
 							.catch(err => res.status(400).json({msg_verify: `Error: '${err}'.`}));
@@ -787,6 +849,110 @@ router.post("/doverifyemail", (req, res) => {
 		}
 		else{
 			return res.status(400).json({msg_verify: "Oops, your request is invalid."});
+		}
+	});
+});
+
+/**
+ * req.body {
+ *     @email
+ *     @to_email
+ *     @community_id
+ * }
+ */
+router.post("/sharecommunity", (req, res) => {
+	// check the email's validation
+	let errors = {};
+	if(Validator.isEmpty(req.body.to_email)){
+		errors.msg_share = "Whom do you want send to?";
+	}
+	else if(!Validator.isEmail(req.body.to_email)){
+		errors.msg_share = "Email is invalid.";
+	}
+	if(!isEmpty(errors)){
+		return res.status(400).json(errors);
+	}
+
+	const share_link = config.FRONT_URL + '/view-community/' + req.body.community_id;
+	const mailOptions = {
+		from: `FindYourChurch <${req.body.email}>`,
+		to: req.body.to_email,
+		subject: 'FindYourChurch: I suggest this community.',
+		html: `
+				<h2>Hi</h2>
+				<h4>This is a my favorite community.</h4>
+				My suggestion:
+				<p>
+					<a href="${share_link}">${share_link}</a>
+				</p>
+			`
+	};
+
+	// send it!
+	fycmailer.sendMail(mailOptions, function(err, info){
+		if(err){
+			console.log(`send mail failed: ${err}`);
+			return res.status(400).json({
+				share_link: `Oops! ${err}`
+			});
+		}
+		else{
+			console.log("sent a mail.");
+			return res.status(200).json({
+				share_link: `Success!`,
+			});
+		}
+	});
+});
+
+/**
+ * req.body {
+ *     @id
+ *     @email
+ *     @community_id
+ *     @community_name
+ * }
+ */
+router.post("/reportcommunity", (req, res) => {
+	// check the email's validation
+	let errors = {};
+	if(Validator.isEmpty(req.body.email)){
+		errors.msg_report = "Sender email is empty";
+	}
+	else if(!Validator.isEmail(req.body.email)){
+		errors.msg_report = "Email is invalid.";
+	}
+	if(!isEmpty(errors)){
+		return res.status(400).json(errors);
+	}
+
+	const report_link = config.FRONT_URL + '/view-community/' + req.body.community_id;
+	const mailOptions = {
+		from: `#${req.body.id} <${req.body.email}>`,
+		to: 'support@findyourchurch.com',
+		subject: 'COMMUNITY REPORTED',
+		html: `
+				<h2>${req.body.community_name}</h2>
+				<h4>I report this community.</h4>
+				<p>
+					<a href="${report_link}">${report_link}</a>
+				</p>
+			`
+	};
+
+	// send it!
+	fycmailer.sendMail(mailOptions, function(err, info){
+		if(err){
+			console.log(`send mail failed: ${err}`);
+			return res.status(400).json({
+				msg_report: `Oops! ${err}`
+			});
+		}
+		else{
+			console.log("sent a mail.");
+			return res.status(200).json({
+				msg_report: `Success!`,
+			});
 		}
 	});
 });

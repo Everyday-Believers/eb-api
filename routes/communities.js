@@ -5,6 +5,7 @@ const config = require("../config");
 const stripe = require('stripe')(config.STRIPE_SK);
 const Community = require("../models/Community");
 const User = require("../models/User");
+const getDistLatlng = require("../utils/latlng-dist");
 
 /**
  * create new community
@@ -462,6 +463,7 @@ router.post("/activate", async (req, res) => {
 														subscription: subscription,
 														last_invoice: last_invoice,
 														upcoming_invoice: invoice,
+														trialing: subscription.status === 'trialing',
 													});
 												}
 											});
@@ -646,6 +648,128 @@ router.post("/delete", (req, res) => {
 		else{
 			return res.status(400).json({msg_community: "The community could not be deleted."});
 		}
+	});
+});
+
+/**
+ * search criteria:
+ req.body {
+  category: 'Church',
+  radius: 1,
+  address: '',
+  lat: 51.8750969,
+  lng: -0.3982276,
+  filter: {
+    days: '0000000',
+    times: '000',
+    frequency: '00000',
+    ages: '00000000000',
+    gender: '000',
+    parking: '00000',
+    ministries: '0000000',
+    other_services: '000000',
+    ambiance: '0000',
+    event_type: '00000000',
+    support_type: '00000'
+  }
+}
+
+ */
+const filters1 = ['days', 'times', 'ages', 'parking', 'ministries', 'other_services'];
+const filters2 = ['frequency', 'gender', 'ambiance', 'event_type', 'support_type'];
+router.post("/search", (req, res) => {
+	let counts = {
+		days: [], // 0 - (filter['days'].length - 1)
+		times: [],
+		parking: [],
+		ministries: [],
+		other_services: [],
+
+		frequency: [],
+		ages: [],
+		gender: [],
+		ambiance: [],
+		event_type: [],
+		support_type: [],
+	};
+	let results = [];
+
+	const keys = Object.keys(counts);
+	for(const key of keys){
+		// comm[key] -> 001010
+		counts[key] = new Array(req.body.filter[key].length).fill(0);
+	}
+
+	console.log(req.body);
+
+	Community.find({activated: true}).then(comms => {
+		for(let comm of comms){
+			if(isEmpty(comm.coordinate))
+				continue;
+			const lat = comm.coordinate ? comm.coordinate.lat : 0;
+			const lng = comm.coordinate ? comm.coordinate.lng : 0;
+			const dist = Math.round(getDistLatlng(req.body.lat, req.body.lng, lat, lng));
+
+			// check the category
+			if(dist > req.body.radius)
+				continue;
+
+			// check the name
+			if(!isEmpty(req.body.category) && comm.category !== req.body.category)
+				continue;
+
+			// filtering
+			let is_passed = true;
+			for(const filter1 of filters1){
+				if(!is_passed)
+					continue;
+				const dat1_value = parseInt(comm[filter1], 2);
+				const pat1_value = parseInt(req.body.filter[filter1], 2);
+				if(pat1_value === 0)
+					continue;
+				if((dat1_value & pat1_value) === 0){
+					is_passed = false;
+				}
+			}
+
+			if(is_passed){
+				for(const filter2 of filters2){
+					if(!is_passed)
+						continue;
+					const dat2_value = parseInt(comm[filter2], 2);
+					const pat2_value = parseInt(req.body.filter[filter2], 2);
+					if(pat2_value === 0)
+						continue;
+					if(dat2_value !== pat2_value){
+						is_passed = false;
+					}
+				}
+			}
+
+			// is this comm countable for each filter item?
+			for(const key of keys){
+				// comm[key] -> 001010
+				for(let i = 0; i < comm[key].length; i++){
+					if((parseInt(comm[key], 2) & (1 << i)) !== 0)
+						counts[key][i]++;
+				}
+			}
+
+			if(is_passed){
+				results.push({dist: dist, data: comm});
+			}
+		}
+
+		console.log(results.length);
+
+		return res.status(200).json({results: results, counts: counts});
+	});
+});
+
+router.post("/viewCommunity", (req, res) => {
+	console.log(req.body);
+	Community.findOne({_id: req.body.id}).then(comm => {
+		return res.status(200).json(comm);
 	});
 });
 

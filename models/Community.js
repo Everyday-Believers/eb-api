@@ -13,6 +13,10 @@ const CommunitySchema = new Schema({
 		type: Boolean,
 		default: false,
 	},
+	activated_at: {
+		type: Date,
+		default: Date.now,
+	},
 	community_name: {
 		type: String,
 		required: true
