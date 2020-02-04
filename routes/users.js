@@ -515,6 +515,26 @@ router.post("/update", (req, res) => {
 					});
 				}
 			}
+			else if(req.body.pic !== undefined){
+				if(isEmpty(req.body.pic)){
+					return res.status(400).json({msg_pic: "Empty data."});
+				}
+				else if(user.pic === req.body.pic){
+					return res.status(200).json({msg_pic: "Not modified!"});
+				}
+				else{
+					user.pic = req.body.pic;
+					user
+						.save()
+						.then(() => {
+							// modified
+							return res.status(200).json({msg_pic: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_pic: "Database error."});
+						});
+				}
+			}
 			else if(req.body.phone !== undefined){
 				if(isEmpty(req.body.phone)){
 					return res.status(400).json({msg_phone: "You entered empty value."});

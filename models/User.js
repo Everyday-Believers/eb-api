@@ -13,6 +13,10 @@ const UserSchema = new Schema({
 		type: String,
 		required: true,
 	},
+	pic: {
+		type: String,
+		default: "",
+	},
 	admin_email: { // just for displaying on admin panel.
 		type: String,
 		required: false,
