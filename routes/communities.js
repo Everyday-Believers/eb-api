@@ -28,14 +28,14 @@ router.post("/create", (req, res) => {
 		});
 	}
 	else{
+		console.log(req.body.community_id);
 		// check existence for voiding of duplication.
 		Community.findOne({
-			community_name: community_info.community_name,
-			category: community_info.category,
-			address: community_info.address,
+			_id: req.body.community_id === -1 ? null : req.body.community_id,
 		}).then(community => {
 			if(community){ // if it already exists and new, cannot create it.
 				if(req.body.is_new){ // cannot create
+					console.log("?");
 					return res.status(400).json({msg_community: "The community already exists."});
 				}
 				else{ // edit it.
@@ -44,6 +44,7 @@ router.post("/create", (req, res) => {
 							return res.status(200).json({msg_community: "The community was saved."});
 						})
 						.catch(err => console.log(err));
+					console.log("The community modified.");
 				}
 			}
 			else{ // we can create it.
@@ -56,6 +57,7 @@ router.post("/create", (req, res) => {
 						return res.status(200).json({msg_community: "The community was created."});
 					})
 					.catch(err => console.log(err));
+				console.log("New Community created.");
 			}
 		});
 	}
