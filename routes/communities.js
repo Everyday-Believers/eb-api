@@ -615,6 +615,7 @@ router.post("/deactivate", (req, res) => {
 											else{
 												return res.status(200).json({
 													msg: "A community was deactivated.",
+													tickets: user.tickets,
 													subscription: subscription,
 													upcoming_invoice: invoice,
 												});
