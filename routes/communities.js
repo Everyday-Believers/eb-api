@@ -734,7 +734,7 @@ router.post("/search", (req, res) => {
 				const pat1_value = parseInt(req.body.filter[filter1], 2);
 				if(pat1_value === 0)
 					continue;
-				if((dat1_value & pat1_value) === 0){
+				if((dat1_value & pat1_value) !== pat1_value){
 					is_passed = false;
 				}
 			}
