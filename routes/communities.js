@@ -756,8 +756,9 @@ router.post("/search", (req, res) => {
 			// is this comm countable for each filter item?
 			for(const key of keys){
 				// comm[key] -> 001010
-				for(let i = 0; i < comm[key].length; i++){
-					if((parseInt(comm[key], 2) & (1 << i)) !== 0)
+				const values = comm[key].split("");
+				for(let i = 0; i < values.length; i++){
+					if(values[i] === "1")
 						counts[key][i]++;
 				}
 			}

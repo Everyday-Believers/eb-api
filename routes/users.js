@@ -27,12 +27,12 @@ router.post("/register", (req, res) => {
 	const {msg, isValid} = validateRegisterInput(req.body);
 	// Check validation
 	if(!isValid){
-		return res.status(400).json({msg_register: msg});
+		return res.status(400).json(msg);
 	}
 
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
-			return res.status(400).json({msg_register: "Email was already registered."});
+			return res.status(400).json({msg_reg_email: "Email was already registered."});
 		}
 		else{
 			const newUser = new User({
@@ -50,57 +50,46 @@ router.post("/register", (req, res) => {
 						.save()
 						.then(user => {
 							// send a mail to verify
-							let error;
-							if(Validator.isEmpty(req.body.email)){
-								error = "What do you want to verify?";
-							}
-							else if(!Validator.isEmail(req.body.email)){
-								error = "Email is invalid.";
-							}
-							if(!isEmpty(error)){
-							}
-							else{
-								const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
-								const verify_link = config.FRONT_URL + '/verify-email/' + key;
+							const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+							const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
-								// Add new pending to reset the password
-								const newPending = new VerifyPending({
-									key: key,
-									email: req.body.email,
-								});
-								newPending
-									.save()
-									.then(() => {
-										// preparing the mail contents...
-										const mailOptions = {
-											from: "FindYourChurch <dont-reply@findyourchurch.com>",
-											to: req.body.email,
-											subject: 'FindYourChurch: Verify your email please.',
-											html: `
+							// Add new pending to reset the password
+							const newPending = new VerifyPending({
+								key: key,
+								email: req.body.email,
+							});
+							newPending
+								.save()
+								.then(() => {
+									// preparing the mail contents...
+									const mailOptions = {
+										from: "FindYourChurch <dont-reply@findyourchurch.com>",
+										to: req.body.email,
+										subject: 'FindYourChurch: Verify your email please.',
+										html: `
 												<h2>Hi, ${user.fname}</h2>
 												<h4>Thank you for signing up.</h4>
-												To continue, just click:
+												To verify your account, click:
 												<p>
 													<a href="${verify_link}">${verify_link}</a>
 												</p>
 											`
-										};
+									};
 
-										res.status(200).json({
-											msg_register: "Success! Click the link in the email we just sent you to verify your email."
-										});
+									res.status(200).json({
+										msg_register: "Success! Click the link in the email we just sent you to verify your email."
+									});
 
-										// send it!
-										fycmailer.sendMail(mailOptions, function(err, info){
-											if(err){
-											}
-											else{
-												console.log("Sent a mail to verify user email.")
-											}
-										});
-									})
-									.catch(err => console.log(err));
-							}
+									// send it!
+									fycmailer.sendMail(mailOptions, function(err, info){
+										if(err){
+										}
+										else{
+											console.log("Sent a mail to verify the user email.")
+										}
+									});
+								})
+								.catch(err => console.log(err));
 						})
 						.catch(err => console.log(err));
 				});
@@ -141,7 +130,7 @@ router.post("/login", (req, res) => {
 	const {msg, isValid} = validateLoginInput(req.body);
 	// Check validation
 	if(!isValid){
-		return res.status(400).json({msg_login: msg});
+		return res.status(400).json(msg);
 	}
 	const email = req.body.email;
 	const password = req.body.password;
@@ -150,7 +139,7 @@ router.post("/login", (req, res) => {
 	User.findOne({email: email}).then(user => {
 		// Check if user exists
 		if(!user){
-			return res.status(400).json({msg_login: "Email not found"});
+			return res.status(400).json({msg_login_email: "Email not found"});
 		}
 		else{
 			// Check password
@@ -174,14 +163,14 @@ router.post("/login", (req, res) => {
 						},
 						(err, token) => {
 							res.status(200).json({
-								msg: "welcome to FindYourChurch.org",
+								msg_login: "welcome to FindYourChurch.org",
 								token: "Bearer " + token,
 							});
 						}
 					);
 				}
 				else{
-					return res.status(400).json({msg_login: "Password incorrect"});
+					return res.status(400).json({msg_login_password: "Password incorrect"});
 				}
 			});
 		}
