@@ -39,6 +39,7 @@ router.post("/register", (req, res) => {
 				fname: req.body.fname,
 				lname: req.body.lname,
 				email: req.body.email,
+				admin_email: req.body.email,
 				password: req.body.password
 			});
 			// Hash password before saving in database
@@ -444,8 +445,8 @@ router.post("/update", (req, res) => {
 					});
 			}
 			else if(req.body.admin_email !== undefined){
-				if(isEmpty(req.body.admin_email)){
-					return res.status(400).json({msg_admin_email: "You entered empty value."});
+				if(isEmpty(req.body.admin_email) && isEmpty(user.phone)){
+					return res.status(400).json({msg_admin_email: "Email OR phone is required."});
 				}
 				else if(!Validator.isEmail(req.body.admin_email)){
 					return res.status(400).json({msg_admin_email: "Invalid email"});
@@ -525,8 +526,8 @@ router.post("/update", (req, res) => {
 				}
 			}
 			else if(req.body.phone !== undefined){
-				if(isEmpty(req.body.phone)){
-					return res.status(400).json({msg_phone: "You entered empty value."});
+				if(isEmpty(req.body.phone) && isEmpty(user.admin_email)){
+					return res.status(400).json({msg_phone: "Email OR phone is required."});
 				}
 				else if(!Validator.isMobilePhone(req.body.phone)){
 					return res.status(400).json({msg_phone: "Invalid phone number"});

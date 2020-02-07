@@ -18,13 +18,22 @@ router.post("/create", (req, res) => {
 	// check the validation of (community_name, category, address)
 	if(isEmpty(community_info.owner_id)){
 		return res.status(400).json({
-			msg_community: "Oops, this error message must be shown."
+			msg_community: "Oops, this error message must not be shown."
 		});
 	}
-	else if(isEmpty(community_info.community_name) || isEmpty(community_info.category) || isEmpty(community_info.address)){
+	else if(isEmpty(community_info.community_name)){
 		return res.status(400).json({
-			msg_community: `Community name, category, and address cannot be empty.
-                     Please back to community base info.`
+			msg_community_name: "Community name is required",
+		});
+	}
+	else if(isEmpty(community_info.category)){
+		return res.status(400).json({
+			msg_community_category: "Category is required",
+		});
+	}
+	else if(isEmpty(community_info.address)){
+		return res.status(400).json({
+			msg_community_address: "Community address is required",
 		});
 	}
 	else{
