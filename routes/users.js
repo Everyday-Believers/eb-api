@@ -448,7 +448,7 @@ router.post("/update", (req, res) => {
 				if(isEmpty(req.body.admin_email) && isEmpty(user.phone)){
 					return res.status(400).json({msg_admin_email: "Email OR phone is required."});
 				}
-				else if(!Validator.isEmail(req.body.admin_email)){
+				else if(!Validator.isEmail(req.body.admin_email) && !isEmpty(req.body.admin_email)){
 					return res.status(400).json({msg_admin_email: "Invalid email"});
 				}
 				else if(user.admin_email === req.body.admin_email){
@@ -529,7 +529,7 @@ router.post("/update", (req, res) => {
 				if(isEmpty(req.body.phone) && isEmpty(user.admin_email)){
 					return res.status(400).json({msg_phone: "Email OR phone is required."});
 				}
-				else if(!Validator.isMobilePhone(req.body.phone)){
+				else if(!Validator.isMobilePhone(req.body.phone) && !isEmpty(req.body.phone)){
 					return res.status(400).json({msg_phone: "Invalid phone number"});
 				}
 				else if(user.phone === req.body.phone){
