@@ -10,22 +10,9 @@ const communities = require("./routes/communities");
 const stripepay = require("./routes/stripe-pay");
 const testroute = require("./routes/test-route");
 
-const white_list = [
-	'https://develop.findyourchurch.org',
-	'https://findyourchurch.org',
-	'http://localhost:3000',
-];
-
 app.use(
 	cors({
-		origin: function(origin, callback){
-			if(white_list.indexOf(origin) !== -1){
-				callback(null, true);
-			}
-			else{
-				callback(new Error('Not allowed by CORS'));
-			}
-		}
+		origin: FRONT_URL,
 	})
 );
 
