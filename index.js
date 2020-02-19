@@ -19,12 +19,7 @@ app.use(
 // Body-parser middleware
 app.use(
 	bodyParser.json({
-		limit: '50000kb',
-	}));
-app.use(
-	bodyParser.urlencoded({
-		limit: '50000kb',
-		extended: false
+		limit: '30mb',
 	}));
 
 // Connect to MongoDB
