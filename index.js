@@ -10,19 +10,16 @@ const communities = require("./routes/communities");
 const stripepay = require("./routes/stripe-pay");
 const testroute = require("./routes/test-route");
 
-app.use(cors({
-	origin: "*",
-}));
+app.use(cors());
 
 // Body-parser middleware
 app.use(
-	bodyParser.urlencoded({
-		limit: '50mb',
-		extended: true
+	bodyParser.json({
+		limit: '5000kb',
 	}));
 app.use(
-	bodyParser.json({
-		limit: '50mb',
+	bodyParser.urlencoded({
+		limit: '5000kb',
 		extended: true
 	}));
 
@@ -45,4 +42,4 @@ app.use("/api/stripe", stripepay);
 app.use("/api/test", testroute);
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Server up and running on port ${port} !`));
+app.listen(port, () => console.log(`Server up and running on port ${port}!`));
