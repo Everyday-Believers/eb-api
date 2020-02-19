@@ -15,12 +15,12 @@ app.use(cors());
 // Body-parser middleware
 app.use(
 	bodyParser.json({
-		limit: '5000kb',
+		limit: '50000kb',
 	}));
 app.use(
 	bodyParser.urlencoded({
-		limit: '5000kb',
-		extended: true
+		limit: '50000kb',
+		extended: false
 	}));
 
 // Connect to MongoDB
