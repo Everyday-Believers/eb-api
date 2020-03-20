@@ -694,6 +694,9 @@ router.post("/delete", (req, res) => {
 const filters1 = ['days', 'times', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
+
+	console.log(req.body);
+
 	let counts = {
 		days: [], // 0 - (filter['days'].length - 1)
 		times: [],
@@ -716,18 +719,21 @@ router.post("/search", (req, res) => {
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
-	console.log(req.body);
-
 	Community.find({activated: true}).then(comms => {
 		for(let comm of comms){
 			if(isEmpty(comm.coordinate))
 				continue;
+
 			const lat = comm.coordinate ? comm.coordinate.lat : 0;
 			const lng = comm.coordinate ? comm.coordinate.lng : 0;
 			const dist = Math.round(getDistLatlng(req.body.lat, req.body.lng, lat, lng));
 
-			// check the category
-			if(dist > req.body.radius)
+			if(req.body.owner !== null && req.body.owner !== undefined){
+				if(req.body.owner !== comm.owner_id)
+					continue;
+			}
+
+			if(dist > (req.body.radius === null ? 5000 : req.body.radius))
 				continue;
 
 			// check the name
