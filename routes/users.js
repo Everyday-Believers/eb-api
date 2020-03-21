@@ -48,51 +48,53 @@ router.post("/register", (req, res) => {
 					if(err) throw err;
 					newUser.password = hash;
 					newUser
-						.save()
-						.then(user => {
-							// send a mail to verify
-							const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
-							const verify_link = config.FRONT_URL + '/verify-email/' + key;
+							.save()
+							.then(user => {
+								// send a mail to verify
+								const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+								const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
-							// Add new pending to reset the password
-							const newPending = new VerifyPending({
-								key: key,
-								email: req.body.email,
-							});
-							newPending
-								.save()
-								.then(() => {
-									// preparing the mail contents...
-									const mailOptions = {
-										from: "FindYourChurch <dont-reply@findyourchurch.com>",
-										to: req.body.email,
-										subject: 'FindYourChurch: Verify your email please.',
-										html: `
-												<h2>Hi, ${user.fname}</h2>
-												<h4>Thank you for signing up.</h4>
-												To verify your account, click:
-												<p>
-													<a href="${verify_link}">${verify_link}</a>
-												</p>
-											`
-									};
+								// Add new pending to verify email
+								/*
+								const newPending = new VerifyPending({
+									key: key,
+									email: req.body.email,
+								});
+								newPending
+									.save()
+									.then(() => {
+										// preparing the mail contents...
+										const mailOptions = {
+											from: "FindYourChurch <dont-reply@findyourchurch.com>",
+											to: req.body.email,
+											subject: 'FindYourChurch: Verify your email please.',
+											html: `
+													<h2>Hi, ${user.fname}</h2>
+													<h4>Thank you for signing up.</h4>
+													To verify your account, click:
+													<p>
+														<a href="${verify_link}">${verify_link}</a>
+													</p>
+												`
+										};
 
-									res.status(200).json({
-										msg_register: "Success! Click the link in the email we just sent you to verify your email."
-									});
+										res.status(200).json({
+											msg_register: "Success! Click the link in the email we just sent you to verify your email."
+										});
 
-									// send it!
-									fycmailer.sendMail(mailOptions, function(err, info){
-										if(err){
-										}
-										else{
-											console.log("Sent a mail to verify the user email.")
-										}
-									});
-								})
-								.catch(err => console.log(err));
-						})
-						.catch(err => console.log(err));
+										// send it!
+										fycmailer.sendMail(mailOptions, function(err, info){
+											if(err){
+											}
+											else{
+												console.log("Sent a mail to verify the user email.")
+											}
+										});
+									})
+									.catch(err => console.log(err));
+								*/
+							})
+							.catch(err => console.log(err));
 				});
 			});
 		}
@@ -116,9 +118,9 @@ router.post("/googleregister", (req, res) => {
 				google_id: req.body.google_id
 			});
 			newUser
-				.save()
-				.then(user => res.json(user))
-				.catch(err => console.log(err));
+					.save()
+					.then(user => res.json(user))
+					.catch(err => console.log(err));
 		}
 	});
 });
@@ -157,17 +159,17 @@ router.post("/login", (req, res) => {
 
 					// Sign token
 					jwt.sign(
-						payload,
-						config.SECRET_KEY,
-						{
-							expiresIn: 31556926 // 1 year in seconds
-						},
-						(err, token) => {
-							res.status(200).json({
-								msg_login: "welcome to FindYourChurch.org",
-								token: "Bearer " + token,
-							});
-						}
+							payload,
+							config.SECRET_KEY,
+							{
+								expiresIn: 31556926 // 1 year in seconds
+							},
+							(err, token) => {
+								res.status(200).json({
+									msg_login: "welcome to FindYourChurch.org",
+									token: "Bearer " + token,
+								});
+							}
 					);
 				}
 				else{
@@ -213,17 +215,17 @@ router.post("/googlelogin", (req, res) => {
 
 	// Sign token
 	jwt.sign(
-		payload,
-		config.SECRET_KEY,
-		{
-			expiresIn: 86400 // 1 day in seconds
-		},
-		(err, token) => {
-			res.json({
-				success: true,
-				token: "Bearer " + token
-			});
-		}
+			payload,
+			config.SECRET_KEY,
+			{
+				expiresIn: 86400 // 1 day in seconds
+			},
+			(err, token) => {
+				res.json({
+					success: true,
+					token: "Bearer " + token
+				});
+			}
 	);
 });
 
@@ -256,36 +258,36 @@ router.post("/resetpassword", (req, res) => {
 				email: req.body.email
 			});
 			newPending
-				.save()
-				.then(() => {
-					// preparing the mail contents...
-					const mailOptions = {
-						from: "FindYourChurch <dont-reply@findyourchurch.com>",
-						to: req.body.email,
-						subject: 'Step 1: Please check this to reset your information',
-						html: `
+					.save()
+					.then(() => {
+						// preparing the mail contents...
+						const mailOptions = {
+							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							to: req.body.email,
+							subject: 'Step 1: Please check this to reset your information',
+							html: `
 							<h2>Hi, ${user.fname}.</h2>
 							<h4>We received your request to reset the password. You can confirm it by clicking the following:</h4>
 							<p>
 								<a href="${user.link}">${user.link}</a>
 							</p>
 						`
-					};
+						};
 
-					// send it!
-					fycmailer.sendMail(mailOptions, function(err, info){
-						if(err){
-							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({msg_reset: err});
-						}
-						else{
-							console.log("sent a mail.");
-							return res.status(200).json({
-								msg_reset: "Success! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
-							});
-						}
-					});
-				})
+						// send it!
+						fycmailer.sendMail(mailOptions, function(err, info){
+							if(err){
+								console.log(`send mail failed: ${err}`);
+								return res.status(400).json({msg_reset: err});
+							}
+							else{
+								console.log("sent a mail.");
+								return res.status(200).json({
+									msg_reset: "Success! To continue, check your mail in " + config.PENDING_EXPIRATION / 1000 + " seconds"
+								});
+							}
+						});
+					})
 		}
 		else{
 			return res.status(400).json({msg_reset: "The email address is not exist"});
@@ -344,18 +346,18 @@ router.post("/doresetpassword", (req, res) => {
 								usr.email_verified = true; // this email was verified.
 								usr.email_verified_at = new Date(Date.now());
 								usr
-									.save()
-									.then(() => {
-										// remove it from pending list.
-										const to_email = pending.email;
-										pending.remove();
+										.save()
+										.then(() => {
+											// remove it from pending list.
+											const to_email = pending.email;
+											pending.remove();
 
-										// preparing the mail contents...
-										const mailOptions = {
-											from: "FindYourChurch <dont-reply@findyourchurch.com>",
-											to: to_email,
-											subject: 'Step 2: Your password was regenerated.',
-											html: `
+											// preparing the mail contents...
+											const mailOptions = {
+												from: "FindYourChurch <dont-reply@findyourchurch.com>",
+												to: to_email,
+												subject: 'Step 2: Your password was regenerated.',
+												html: `
 												<h2>Hi, ${usr.fname}.</h2>
 												<h4>Here is your new password in:</h4>
 												<p style="background-color: #888; padding: 10px 16px; color: #888;">
@@ -367,30 +369,30 @@ router.post("/doresetpassword", (req, res) => {
 												</p>
 												<p>Thank you.</p>
 											`
-										};
+											};
 
-										// send it!
-										fycmailer.sendMail(mailOptions, function(err, info){
-											if(err){
-												console.log(`send mail failed: ${err}`);
-												res.status(400).json(err);
-											}
-											else{
-												console.log("sent a mail with new password.");
-												res.json({
-													success: true,
-													info: info
-												});
-											}
-										});
+											// send it!
+											fycmailer.sendMail(mailOptions, function(err, info){
+												if(err){
+													console.log(`send mail failed: ${err}`);
+													res.status(400).json(err);
+												}
+												else{
+													console.log("sent a mail with new password.");
+													res.json({
+														success: true,
+														info: info
+													});
+												}
+											});
 
-										// return with "success" message.
-										return res.status(400).json({
-											success: true,
-											error: `You did it! Please check another mail including your new password now.`
-										});
-									})
-									.catch(err => res.status(400).json({error: `Error: '${err}'.`}));
+											// return with "success" message.
+											return res.status(400).json({
+												success: true,
+												error: `You did it! Please check another mail including your new password now.`
+											});
+										})
+										.catch(err => res.status(400).json({error: `Error: '${err}'.`}));
 							});
 						});
 					}
@@ -435,14 +437,14 @@ router.post("/update", (req, res) => {
 				user.fname = req.body.fname;
 				user.lname = req.body.lname;
 				user
-					.save()
-					.then(() => {
-						// modified
-						return res.status(200).json({msg_name: "Your name has been changed."});
-					})
-					.catch(() => {
-						return res.status(500).json({msg_name: "Database error."});
-					});
+						.save()
+						.then(() => {
+							// modified
+							return res.status(200).json({msg_name: "Your name has been changed."});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_name: "Database error."});
+						});
 			}
 			else if(req.body.admin_email !== undefined){
 				if(isEmpty(req.body.admin_email) && isEmpty(user.phone)){
@@ -462,14 +464,14 @@ router.post("/update", (req, res) => {
 						else{
 							user.admin_email = req.body.admin_email;
 							user
-								.save()
-								.then(() => {
-									// modified
-									return res.status(200).json({msg_admin_email: "Modified!"});
-								})
-								.catch(() => {
-									return res.status(500).json({msg_admin_email: "Database error."});
-								});
+									.save()
+									.then(() => {
+										// modified
+										return res.status(200).json({msg_admin_email: "Modified!"});
+									})
+									.catch(() => {
+										return res.status(500).json({msg_admin_email: "Database error."});
+									});
 						}
 					});
 				}
@@ -493,14 +495,14 @@ router.post("/update", (req, res) => {
 							user.email = req.body.email;
 							user.email_verified = false;
 							user
-								.save()
-								.then(() => {
-									// modified
-									return res.status(200).json({msg_email: "Modified!"});
-								})
-								.catch(() => {
-									return res.status(500).json({msg_email: "Database error."});
-								});
+									.save()
+									.then(() => {
+										// modified
+										return res.status(200).json({msg_email: "Modified!"});
+									})
+									.catch(() => {
+										return res.status(500).json({msg_email: "Database error."});
+									});
 						}
 					});
 				}
@@ -515,14 +517,14 @@ router.post("/update", (req, res) => {
 				else{
 					user.pic = req.body.pic;
 					user
-						.save()
-						.then(() => {
-							// modified
-							return res.status(200).json({msg_pic: "Modified!"});
-						})
-						.catch(() => {
-							return res.status(500).json({msg_pic: "Database error."});
-						});
+							.save()
+							.then(() => {
+								// modified
+								return res.status(200).json({msg_pic: "Modified!"});
+							})
+							.catch(() => {
+								return res.status(500).json({msg_pic: "Database error."});
+							});
 				}
 			}
 			else if(req.body.phone !== undefined){
@@ -543,14 +545,14 @@ router.post("/update", (req, res) => {
 						else{
 							user.phone = req.body.phone;
 							user
-								.save()
-								.then(() => {
-									// modified
-									return res.status(200).json({msg_phone: "Modified!"});
-								})
-								.catch(() => {
-									return res.status(500).json({msg_phone: "Database error."});
-								});
+									.save()
+									.then(() => {
+										// modified
+										return res.status(200).json({msg_phone: "Modified!"});
+									})
+									.catch(() => {
+										return res.status(500).json({msg_phone: "Database error."});
+									});
 						}
 					});
 				}
@@ -571,14 +573,14 @@ router.post("/update", (req, res) => {
 							}
 							user.password = hash;
 							user
-								.save()
-								.then(() => {
-									// modified
-									return res.status(200).json({msg_password: "Your password has been modified."});
-								})
-								.catch(() => {
-									return res.status(500).json({msg_password: "Database error."});
-								});
+									.save()
+									.then(() => {
+										// modified
+										return res.status(200).json({msg_password: "Your password has been modified."});
+									})
+									.catch(() => {
+										return res.status(500).json({msg_password: "Database error."});
+									});
 						});
 					});
 				}
@@ -601,14 +603,14 @@ router.post("/update", (req, res) => {
 						else{
 							user.ref_code = req.body.ref_code;
 							user
-								.save()
-								.then(() => {
-									// modified
-									return res.status(200).json({msg_ref_code: "Modified!"});
-								})
-								.catch(() => {
-									return res.status(500).json({msg_ref_code: "Database error."});
-								});
+									.save()
+									.then(() => {
+										// modified
+										return res.status(200).json({msg_ref_code: "Modified!"});
+									})
+									.catch(() => {
+										return res.status(500).json({msg_ref_code: "Database error."});
+									});
 						}
 					});
 				}
@@ -645,14 +647,14 @@ router.post("/changepassword", (req, res) => {
 				email: req.body.email,
 			});
 			newPending
-				.save()
-				.then(() => {
-					// preparing the mail contents...
-					const mailOptions = {
-						from: "FindYourChurch <dont-reply@findyourchurch.com>",
-						to: req.body.email,
-						subject: 'FindYourChurch: Forgot password?',
-						html: `
+					.save()
+					.then(() => {
+						// preparing the mail contents...
+						const mailOptions = {
+							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							to: req.body.email,
+							subject: 'FindYourChurch: Forgot password?',
+							html: `
 							<h2>Hi, ${user.fname}</h2>
 							<h4>We received your request to change the password.
 							 You can continue it by clicking the following:</h4>
@@ -660,24 +662,24 @@ router.post("/changepassword", (req, res) => {
 								<a href="${password_link}">${password_link}</a>
 							</p>
 						`
-					};
+						};
 
-					res.status(200).json({
-						msg_change: "Success! Click the link in the email we just sent you to create a new password for your account!"
-					});
+						res.status(200).json({
+							msg_change: "Success! Click the link in the email we just sent you to create a new password for your account!"
+						});
 
-					// send it!
-					fycmailer.sendMail(mailOptions, function(err, info){
-						if(err){
-							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({msg_change: err});
-						}
-						else{
-							console.log("sent a mail.");
-						}
-					});
-				})
-				.catch(err => console.log(err));
+						// send it!
+						fycmailer.sendMail(mailOptions, function(err, info){
+							if(err){
+								console.log(`send mail failed: ${err}`);
+								return res.status(400).json({msg_change: err});
+							}
+							else{
+								console.log("sent a mail.");
+							}
+						});
+					})
+					.catch(err => console.log(err));
 		}
 		else{
 			return res.status(400).json({msg: "The email address is not exist"});
@@ -725,17 +727,17 @@ router.post("/dochangepassword", (req, res) => {
 									user.email_verified = true; // this email was verified.
 									user.email_verified_at = new Date(Date.now());
 									user
-										.save()
-										.then(() => {
-											// remove it from pending list.
-											pending.remove();
+											.save()
+											.then(() => {
+												// remove it from pending list.
+												pending.remove();
 
-											// return with "success" message.
-											return res.status(200).json({
-												msg: `Success! Your password has been changed. Sign in now.`,
-											});
-										})
-										.catch(err => res.status(400).json({msg: `Error: '${err}'.`}));
+												// return with "success" message.
+												return res.status(200).json({
+													msg: `Success! Your password has been changed. Sign in now.`,
+												});
+											})
+											.catch(err => res.status(400).json({msg: `Error: '${err}'.`}));
 								});
 							});
 						}
@@ -777,14 +779,14 @@ router.post("/verifyemail", (req, res) => {
 				email: req.body.email,
 			});
 			newPending
-				.save()
-				.then(() => {
-					// preparing the mail contents...
-					const mailOptions = {
-						from: "FindYourChurch <dont-reply@findyourchurch.com>",
-						to: req.body.email,
-						subject: 'FindYourChurch: Verify your email please.',
-						html: `
+					.save()
+					.then(() => {
+						// preparing the mail contents...
+						const mailOptions = {
+							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							to: req.body.email,
+							subject: 'FindYourChurch: Verify your email please.',
+							html: `
 							<h2>Hi, ${user.fname}</h2>
 							<h4>Thank you for verification</h4>
 							To continue, just click:
@@ -792,25 +794,25 @@ router.post("/verifyemail", (req, res) => {
 								<a href="${verify_link}">${verify_link}</a>
 							</p>
 						`
-					};
+						};
 
-					// send it!
-					fycmailer.sendMail(mailOptions, function(err, info){
-						if(err){
-							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({
-								msg_verify: `Oops! ${err}`
-							});
-						}
-						else{
-							console.log("sent a mail.");
-							return res.status(200).json({
-								msg_verify: `Success! Click the link in the email we just sent you to verify your email!`,
-							});
-						}
-					});
-				})
-				.catch(err => console.log(err));
+						// send it!
+						fycmailer.sendMail(mailOptions, function(err, info){
+							if(err){
+								console.log(`send mail failed: ${err}`);
+								return res.status(400).json({
+									msg_verify: `Oops! ${err}`
+								});
+							}
+							else{
+								console.log("sent a mail.");
+								return res.status(200).json({
+									msg_verify: `Success! Click the link in the email we just sent you to verify your email!`,
+								});
+							}
+						});
+					})
+					.catch(err => console.log(err));
 		}
 		else{
 			return res.status(400).json({msg_verify: "The email address is not exist"});
@@ -839,17 +841,17 @@ router.post("/doverifyemail", (req, res) => {
 						user.email_verified = true;
 						user.email_verified_at = new Date(Date.now());
 						user
-							.save()
-							.then(() => {
-								// remove it from pending list.
-								pending.remove();
+								.save()
+								.then(() => {
+									// remove it from pending list.
+									pending.remove();
 
-								// return with "success" message.
-								return res.status(200).json({
-									msg_verify: `Success! Your email has been verified. Please sign in. If signed in, just continue please.`,
-								});
-							})
-							.catch(err => res.status(400).json({msg_verify: `Error: '${err}'.`}));
+									// return with "success" message.
+									return res.status(200).json({
+										msg_verify: `Success! Your email has been verified. Please sign in. If signed in, just continue please.`,
+									});
+								})
+								.catch(err => res.status(400).json({msg_verify: `Error: '${err}'.`}));
 					}
 					else{
 						return res.status(500).json({msg_verify: "Oh, no. Unknown internal server error."});

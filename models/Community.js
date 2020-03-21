@@ -49,6 +49,10 @@ const CommunitySchema = new Schema({
 		type: String,
 		required: false
 	},
+	website: {
+		type: String,
+		required: false
+	},
 	facebook: {
 		type: String,
 		required: false
