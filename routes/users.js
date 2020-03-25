@@ -78,10 +78,6 @@ router.post("/register", (req, res) => {
 												`
 										};
 
-										res.status(200).json({
-											msg_register: "Success! Click the link in the email we just sent you to verify your email."
-										});
-
 										// send it!
 										fycmailer.sendMail(mailOptions, function(err, info){
 											if(err){
@@ -93,6 +89,10 @@ router.post("/register", (req, res) => {
 									})
 									.catch(err => console.log(err));
 								*/
+
+								res.status(200).json({
+									msg_register: "Success! Click the link in the email we just sent you to verify your email."
+								});
 							})
 							.catch(err => console.log(err));
 				});
