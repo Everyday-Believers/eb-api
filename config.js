@@ -16,7 +16,7 @@ module.exports = {
 	/**
 	 * This setting is used only for the content of the mails with link to ... (in forgot-password)
 	 */
-	FRONT_URL: "https://develop.findyourchurch.org", // process.env.FRONT_URL,
+	FRONT_URL: process.env.FRONT_URL, // process.env.FRONT_URL,
 
 	/**
 	 * TODO: must be replaced for production
