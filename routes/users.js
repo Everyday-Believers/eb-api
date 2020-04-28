@@ -665,7 +665,7 @@ router.post("/changepassword", (req, res) => {
 						};
 
 						res.status(200).json({
-							msg_change: "Success! Click the link in the email we just sent you to create a new password for your account!"
+							msg_change: `Success! We just sent an email to ${req.body.email}.`
 						});
 
 						// send it!
