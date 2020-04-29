@@ -66,7 +66,7 @@ router.post("/register", (req, res) => {
 									.then(() => {
 										// preparing the mail contents...
 										const mailOptions = {
-											from: "FindYourChurch <dont-reply@findyourchurch.com>",
+											from: config.MAIL_SENDER,
 											to: req.body.email,
 											subject: 'FindYourChurch: Verify your email please.',
 											html: `
@@ -263,7 +263,7 @@ router.post("/resetpassword", (req, res) => {
 					.then(() => {
 						// preparing the mail contents...
 						const mailOptions = {
-							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							from: config.MAIL_SENDER,
 							to: req.body.email,
 							subject: 'Step 1: Please check this to reset your information',
 							html: `
@@ -355,7 +355,7 @@ router.post("/doresetpassword", (req, res) => {
 
 											// preparing the mail contents...
 											const mailOptions = {
-												from: "FindYourChurch <dont-reply@findyourchurch.com>",
+												from: config.MAIL_SENDER,
 												to: to_email,
 												subject: 'Step 2: Your password was regenerated.',
 												html: `
@@ -669,7 +669,7 @@ router.post("/changepassword", (req, res) => {
 					.then(() => {
 						// preparing the mail contents...
 						const mailOptions = {
-							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							from: config.MAIL_SENDER,
 							to: req.body.email,
 							subject: 'FindYourChurch: Forgot password?',
 							html: `
@@ -801,7 +801,7 @@ router.post("/verifyemail", (req, res) => {
 					.then(() => {
 						// preparing the mail contents...
 						const mailOptions = {
-							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							from: config.MAIL_SENDER,
 							to: req.body.email,
 							subject: 'FindYourChurch: Verify your email please.',
 							html: `

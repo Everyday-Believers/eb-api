@@ -24,6 +24,7 @@ module.exports = {
 	 * This fake account was generated on https://ethereal.email/ for testing purposes.
 	 */
 	MAIL_SG_API: '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',
+	MAIL_SENDER: 'FindYourChurch <dont-reply@findyourchurch.org>',
 
 	/**
 	 * TODO: must be replaced for production
