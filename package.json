@@ -29,6 +29,7 @@
 		"jwt-decode": "^2.2.0",
 		"mongoose": "^5.9.5",
 		"nodemailer": "^6.4.5",
+		"nodemailer-sendgrid-transport": "^0.2.0",
 		"passport": "^0.4.1",
 		"passport-jwt": "^4.0.0",
 		"proxy-addr": "^2.0.6",
