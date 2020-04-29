@@ -12,14 +12,14 @@ const testroute = require("./routes/test-route");
 
 app.use(
 	cors({
-		origin: FRONT_URL,
+		origin: "*",
 	})
 );
 
 // Body-parser middleware
 app.use(
 	bodyParser.json({
-		limit: '30mb',
+		limit: '50mb',
 	}));
 
 // Connect to MongoDB
