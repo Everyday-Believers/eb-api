@@ -23,10 +23,7 @@ module.exports = {
 	 * FindYourChurch Mailer
 	 * This fake account was generated on https://ethereal.email/ for testing purposes.
 	 */
-	MAIL_HOST: 'smtp.ethereal.email', // fake mailer host for testing.
-	MAIL_PORT: 587,
-	MAIL_USER: 'jared.lynch@ethereal.email',
-	MAIL_PASS: 'w64kSZHEyyGkTfJtaz',
+	MAIL_SG_API: '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',
 
 	/**
 	 * TODO: must be replaced for production
