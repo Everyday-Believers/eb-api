@@ -25,6 +25,10 @@ const UserSchema = new Schema({
 		type: String,
 		required: false,
 	},
+	zip_code: {
+		type: String,
+		required: false,
+	},
 	email: { // for login. in user info
 		type: String,
 		required: true,

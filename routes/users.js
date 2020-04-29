@@ -40,7 +40,8 @@ router.post("/register", (req, res) => {
 				lname: req.body.lname,
 				email: req.body.email,
 				admin_email: req.body.email,
-				password: req.body.password
+				password: req.body.password,
+				zip_code: req.body.zip_code,
 			});
 			// Hash password before saving in database
 			bcrypt.genSalt(10, (err, salt) => {
@@ -557,6 +558,23 @@ router.post("/update", (req, res) => {
 					});
 				}
 			}
+			else if(req.body.zip_code !== undefined){
+				if(user.zip_code === req.body.zip_code){
+					return res.status(200).json({msg_zip_code: "Not modified!"});
+				}
+				else{
+					user.zip_code = req.body.zip_code;
+					user
+							.save()
+							.then(() => {
+								// modified
+								return res.status(200).json({msg_zip_code: "Modified!"});
+							})
+							.catch(() => {
+								return res.status(500).json({msg_zip_code: "Database error."});
+							});
+				}
+			}
 			else if(req.body.password !== undefined){
 				if(isEmpty(req.body.password)){
 					return res.status(400).json({msg_password: "Password cannot be empty."});
@@ -665,7 +683,7 @@ router.post("/changepassword", (req, res) => {
 						};
 
 						res.status(200).json({
-							msg_change: "Success! Click the link in the email we just sent you to create a new password for your account!"
+							msg_change: `Success! We just sent an email to ${req.body.email}.`
 						});
 
 						// send it!
