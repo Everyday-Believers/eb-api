@@ -38,7 +38,7 @@ module.exports = function validateRegisterInput(data){
 		msg.msg_reg_password = "Password must be at least 6 characters";
 	}
 	if(!Validator.equals(data.password, data.password2)){
-		msg.msg_reg_password = "Passwords must match";
+		msg.msg_reg_password = "Passwords do not match. Please try again.";
 	}
 
 	return {
