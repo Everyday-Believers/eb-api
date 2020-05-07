@@ -32,7 +32,7 @@ router.post("/register", (req, res) => {
 
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
-			return res.status(400).json({msg_reg_email: "Email was already registered."});
+			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
 		}
 		else{
 			const newUser = new User({
@@ -66,7 +66,7 @@ router.post("/register", (req, res) => {
 									.then(() => {
 										// preparing the mail contents...
 										const mailOptions = {
-											from: "FindYourChurch <dont-reply@findyourchurch.com>",
+											from: config.MAIL_SENDER,
 											to: req.body.email,
 											subject: 'FindYourChurch: Verify your email please.',
 											html: `
@@ -154,6 +154,7 @@ router.post("/login", (req, res) => {
 						id: user.id,
 						fname: user.fname,
 						lname: user.lname,
+						location: user.location,
 						email: user.email,
 						registered_at: user.registered_at,
 					};
@@ -263,7 +264,7 @@ router.post("/resetpassword", (req, res) => {
 					.then(() => {
 						// preparing the mail contents...
 						const mailOptions = {
-							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							from: config.MAIL_SENDER,
 							to: req.body.email,
 							subject: 'Step 1: Please check this to reset your information',
 							html: `
@@ -355,7 +356,7 @@ router.post("/doresetpassword", (req, res) => {
 
 											// preparing the mail contents...
 											const mailOptions = {
-												from: "FindYourChurch <dont-reply@findyourchurch.com>",
+												from: config.MAIL_SENDER,
 												to: to_email,
 												subject: 'Step 2: Your password was regenerated.',
 												html: `
@@ -559,21 +560,17 @@ router.post("/update", (req, res) => {
 				}
 			}
 			else if(req.body.zip_code !== undefined){
-				if(user.zip_code === req.body.zip_code){
-					return res.status(200).json({msg_zip_code: "Not modified!"});
-				}
-				else{
-					user.zip_code = req.body.zip_code;
-					user
-							.save()
-							.then(() => {
-								// modified
-								return res.status(200).json({msg_zip_code: "Modified!"});
-							})
-							.catch(() => {
-								return res.status(500).json({msg_zip_code: "Database error."});
-							});
-				}
+				user.zip_code = req.body.zip_code;
+				user.location = req.body.location;
+				user
+						.save()
+						.then(() => {
+							// modified
+							return res.status(200).json({msg_zip_code: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_zip_code: "Database error."});
+						});
 			}
 			else if(req.body.password !== undefined){
 				if(isEmpty(req.body.password)){
@@ -669,7 +666,7 @@ router.post("/changepassword", (req, res) => {
 					.then(() => {
 						// preparing the mail contents...
 						const mailOptions = {
-							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							from: config.MAIL_SENDER,
 							to: req.body.email,
 							subject: 'FindYourChurch: Forgot password?',
 							html: `
@@ -801,7 +798,7 @@ router.post("/verifyemail", (req, res) => {
 					.then(() => {
 						// preparing the mail contents...
 						const mailOptions = {
-							from: "FindYourChurch <dont-reply@findyourchurch.com>",
+							from: config.MAIL_SENDER,
 							to: req.body.email,
 							subject: 'FindYourChurch: Verify your email please.',
 							html: `

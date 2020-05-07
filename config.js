@@ -23,10 +23,8 @@ module.exports = {
 	 * FindYourChurch Mailer
 	 * This fake account was generated on https://ethereal.email/ for testing purposes.
 	 */
-	MAIL_HOST: 'smtp.ethereal.email', // fake mailer host for testing.
-	MAIL_PORT: 587,
-	MAIL_USER: 'jared.lynch@ethereal.email',
-	MAIL_PASS: 'w64kSZHEyyGkTfJtaz',
+	MAIL_SG_API: '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',
+	MAIL_SENDER: 'FindYourChurch <dont-reply@findyourchurch.org>',
 
 	/**
 	 * TODO: must be replaced for production
@@ -37,5 +35,5 @@ module.exports = {
 	 * Publishable key: pk_live_nPL4q6SyxeqSknHK2Hs3wHta
 	 */
 	STRIPE_SK: "sk_test_TfCg96voiaBUAmLg9odvjT7y", // of findyourchurch.org
-	SUBSCRIBER_MONTHLY_PLAN: "plan_FKP4sKe1DC6uMP", // can use this for the production?
+	SUBSCRIBER_MONTHLY_PLAN: "plan_HDYf9XONMdKES8", // "plan_FKP4sKe1DC6uMP", // can use this for the production?
 };
