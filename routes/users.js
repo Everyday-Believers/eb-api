@@ -32,7 +32,7 @@ router.post("/register", (req, res) => {
 
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
-			return res.status(400).json({msg_reg_email: "Email was already registered."});
+			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
 		}
 		else{
 			const newUser = new User({
