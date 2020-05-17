@@ -99,11 +99,19 @@ const CommunitySchema = new Schema({
 		type: String,
 		required: true
 	},
+	hosting: {
+		type: String,
+		required: true
+	},
 	ages: {
 		type: String,
 		required: true
 	},
 	gender: {
+		type: String,
+		required: true
+	},
+	kids_welcome: {
 		type: String,
 		required: true
 	},
