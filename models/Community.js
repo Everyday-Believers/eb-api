@@ -69,11 +69,15 @@ const CommunitySchema = new Schema({
 		type: String,
 		required: false
 	},
+	twitter: {
+		type: String,
+		required: false
+	},
 	podcast: {
 		type: String,
 		required: false
 	},
-	twitter: {
+	zoom: {
 		type: String,
 		required: false
 	},
