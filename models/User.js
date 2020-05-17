@@ -25,6 +25,14 @@ const UserSchema = new Schema({
 		type: String,
 		required: false,
 	},
+	is_organization: {
+		type: Boolean,
+		default: false,
+	},
+	organization_name: {
+		type: String,
+		required: false,
+	},
 	zip_code: {
 		type: String,
 		required: false,
