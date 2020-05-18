@@ -1112,8 +1112,7 @@ router.post("/deletemulti", async (req, res) => {
 const filters1 = ['days', 'times', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
-
-	console.log(req.body);
+	console.log('search criteria:', req.body);
 
 	let counts = {
 		days: [], // 0 - (filter['days'].length - 1)
@@ -1131,13 +1130,23 @@ router.post("/search", (req, res) => {
 	};
 	let results = [];
 
+	// initialize counters
 	const keys = Object.keys(counts);
 	for(const key of keys){
 		// comm[key] -> 001010
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
-	Community.find({activated: true}).then(comms => {
+	const base_criteria = req.body.filter.community_name === undefined || req.body.filter.community_name === '' ? {
+		activated: true,
+	} : {
+		community_name: {$regex: req.body.filter.community_name, $options: "i"}, // if search by community_name
+		activated: true,
+	};
+
+	console.log('base criteria:', base_criteria);
+
+	Community.find(base_criteria).then(comms => {
 		for(let comm of comms){
 			if(isEmpty(comm.coordinate))
 				continue;
