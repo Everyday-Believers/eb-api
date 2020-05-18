@@ -1137,7 +1137,7 @@ router.post("/search", (req, res) => {
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
-	const base_criteria = req.body.filter.community_name === '' ? {
+	const base_criteria = req.body.filter.community_name === undefined || req.body.filter.community_name === '' ? {
 		activated: true,
 	} : {
 		community_name: {$regex: req.body.filter.community_name, $options: "i"}, // if search by community_name
