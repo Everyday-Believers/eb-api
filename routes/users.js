@@ -486,25 +486,25 @@ router.post("/update", (req, res) => {
 			}
 			else if(req.body.organization_name !== undefined){
 				if(isEmpty(req.body.organization_name)){
-					return res.status(400).json({msg_phone: "Organization name is required."});
+					return res.status(400).json({msg_organization_name: "Organization name is required."});
 				}
 				else if(user.organization_name === req.body.organization_name){
-					return res.status(200).json({msg_phone: "Not modified!"});
+					return res.status(200).json({msg_organization_name: "Not modified!"});
 				}
 				else{
 					User.findOne({organization_name: req.body.organization_name}).then(usr => {
 						if(usr){
-							return res.status(400).json({msg_phone: "The organization name was already registered."});
+							return res.status(400).json({msg_organization_name: "The organization name was already registered."});
 						}
 						else{
 							user.organization_name = req.body.organization_name;
 							user.save()
 								.then(() => {
 									// modified
-									return res.status(200).json({msg_phone: "Modified!"});
+									return res.status(200).json({msg_organization_name: "Modified!"});
 								})
 								.catch(() => {
-									return res.status(500).json({msg_phone: "Database error."});
+									return res.status(500).json({msg_organization_name: "Database error."});
 								});
 						}
 					});
