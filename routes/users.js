@@ -595,6 +595,67 @@ router.post("/update", (req, res) => {
 					});
 				}
 			}
+			else if(req.body.website !== undefined){
+				console.log(req.body.website);
+				if(user.website === req.body.website){
+					return res.status(200).json({msg_website: "Not modified!"});
+				}
+				else{
+					user.website = req.body.website;
+					user.save()
+						.then(() => {
+							return res.status(200).json({msg_website: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_website: "Database error."});
+						});
+				}
+			}
+			else if(req.body.facebook !== undefined){
+				if(user.facebook === req.body.facebook){
+					return res.status(200).json({msg_facebook: "Not modified!"});
+				}
+				else{
+					user.facebook = req.body.facebook;
+					user.save()
+						.then(() => {
+							return res.status(200).json({msg_facebook: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_facebook: "Database error."});
+						});
+				}
+			}
+			else if(req.body.twitter !== undefined){
+				if(user.twitter === req.body.twitter){
+					return res.status(200).json({msg_twitter: "Not modified!"});
+				}
+				else{
+					user.twitter = req.body.twitter;
+					user.save()
+						.then(() => {
+							return res.status(200).json({msg_twitter: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_twitter: "Database error."});
+						});
+				}
+			}
+			else if(req.body.instagram !== undefined){
+				if(user.instagram === req.body.instagram){
+					return res.status(200).json({msg_instagram: "Not modified!"});
+				}
+				else{
+					user.instagram = req.body.instagram;
+					user.save()
+						.then(() => {
+							return res.status(200).json({msg_instagram: "Modified!"});
+						})
+						.catch(() => {
+							return res.status(500).json({msg_instagram: "Database error."});
+						});
+				}
+			}
 			else if(req.body.zip_code !== undefined){
 				user.zip_code = req.body.zip_code;
 				user.location = req.body.location;

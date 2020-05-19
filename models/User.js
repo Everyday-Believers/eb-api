@@ -33,6 +33,22 @@ const UserSchema = new Schema({
 		type: String,
 		required: false,
 	},
+	website: {
+		type: String,
+		default: '',
+	},
+	facebook: {
+		type: String,
+		default: '',
+	},
+	twitter: {
+		type: String,
+		default: '',
+	},
+	instagram: {
+		type: String,
+		default: '',
+	},
 	zip_code: {
 		type: String,
 		required: false,
