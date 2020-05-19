@@ -1225,6 +1225,17 @@ router.post("/search", (req, res) => {
 	});
 });
 
+router.post("/getorgnames", (req, res) => {
+	console.log(req.body);
+	Community.find({activated: true, community_name: {$regex: req.body.keyword, $options: "i"}}, 'community_name').then(comms => {
+		let names = [];
+		for(const comm of comms){
+			names.push(comm.community_name);
+		}
+		return res.status(200).json(names);
+	});
+});
+
 router.post("/viewCommunity", (req, res) => {
 	console.log(req.body);
 	Community.findOne({_id: req.body.id}).then(comm => {
