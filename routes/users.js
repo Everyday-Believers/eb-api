@@ -484,6 +484,17 @@ router.post("/update", (req, res) => {
 						return res.status(500).json({msg_name: "Database error."});
 					});
 			}
+			else if(req.body.is_organization !== undefined){
+				user.is_organization = req.body.is_organization;
+				user.save()
+					.then(() => {
+						// modified
+						return res.status(200).json({msg_organization_name: "Modified!"});
+					})
+					.catch(() => {
+						return res.status(500).json({msg_organization_name: "Database error."});
+					});
+			}
 			else if(req.body.organization_name !== undefined){
 				if(isEmpty(req.body.organization_name)){
 					return res.status(400).json({msg_organization_name: "Organization name is required."});
