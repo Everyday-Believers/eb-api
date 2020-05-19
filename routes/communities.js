@@ -1137,11 +1137,16 @@ router.post("/search", (req, res) => {
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
+	let pattern;
+	if(req.body.filter.community_name !== undefined && req.body.filter.community_name !== ''){
+		pattern = req.body.filter.community_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	}
+
 	const base_criteria = req.body.filter.community_name === undefined || req.body.filter.community_name === '' ? {
 		activated: true,
 	} : {
-		community_name: {$regex: req.body.filter.community_name, $options: "i"}, // if search by community_name
 		activated: true,
+		community_name: {$regex: pattern, $options: "i"}, // if search by community_name
 	};
 
 	console.log('base criteria:', base_criteria);
@@ -1227,7 +1232,8 @@ router.post("/search", (req, res) => {
 
 router.post("/getorgnames", (req, res) => {
 	console.log(req.body);
-	Community.find({activated: true, community_name: {$regex: req.body.keyword, $options: "i"}}, 'community_name').then(comms => {
+	const keyword = req.body.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	Community.find({activated: true, community_name: {$regex: keyword, $options: "i"}}, 'community_name').then(comms => {
 		let names = [];
 		for(const comm of comms){
 			names.push(comm.community_name);
