@@ -1118,4 +1118,31 @@ router.post("/reportcommunity", (req, res) => {
 	});
 });
 
+router.post("/getowners", (req, res) => {
+	const keyword = req.body.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const regexp_criteria = {$regex: keyword, $options: "i"};
+
+	User.find({
+		$or: [
+			{fname: regexp_criteria},
+			{lname: regexp_criteria},
+			{phone: regexp_criteria},
+			{admin_email: regexp_criteria},
+			{organization_name: regexp_criteria},
+		]
+	}, 'fname lname phone admin_email is_organization organization_name').then(users => {
+		let owners = [];
+		for(const user of users){
+			const owner_info = {
+				title: `${user.is_organization ? user.organization_name : `${user.fname} ${user.lname}`}`,
+				contact: `${user.admin_email === undefined ? user.email : user.admin_email}${isEmpty(user.phone) ? "" : `, ${user.phone}`}`,
+				value: user._id,
+			};
+			owners.push(owner_info);
+		}
+		console.log("searched owners:", owners.length);
+		return res.status(200).json(owners);
+	});
+});
+
 module.exports = router;
