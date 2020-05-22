@@ -521,6 +521,17 @@ router.post("/update", (req, res) => {
 					});
 				}
 			}
+			else if(req.body.colors !== undefined){
+				user.colors = req.body.colors;
+				user.save()
+					.then(() => {
+						// modified
+						return res.status(200).json({msg_colors: "Modified!"});
+					})
+					.catch(() => {
+						return res.status(500).json({msg_colors: "Database error."});
+					});
+			}
 			else if(req.body.admin_email !== undefined){
 				if(isEmpty(req.body.admin_email) && isEmpty(user.phone)){
 					return res.status(400).json({msg_admin_email: "Email OR phone is required."});

@@ -57,6 +57,10 @@ const UserSchema = new Schema({
 		type: Object,
 		required: false,
 	},
+	colors: {
+		type: Object,
+		default: null,
+	},
 	email: { // for login. in user info
 		type: String,
 		required: true,
