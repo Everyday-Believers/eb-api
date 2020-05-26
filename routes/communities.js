@@ -1097,8 +1097,10 @@ router.post("/deletemulti", async (req, res) => {
     days: '0000000',
     times: '000',
     frequency: '00000',
+    hosting: '00',
     ages: '00000000000',
     gender: '000',
+    kids_welcome: '00',
     parking: '00000',
     ministries: '0000000',
     other_services: '000000',
@@ -1109,21 +1111,23 @@ router.post("/deletemulti", async (req, res) => {
 }
 
  */
-const filters1 = ['days', 'times', 'ages', 'parking', 'ministries', 'other_services'];
-const filters2 = ['frequency', 'gender', 'ambiance', 'event_type', 'support_type'];
+const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
+const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
 	console.log('search criteria:', req.body);
 
 	let counts = {
 		days: [], // 0 - (filter['days'].length - 1)
 		times: [],
+		hosting: [],
+		ages: [],
 		parking: [],
 		ministries: [],
 		other_services: [],
 
 		frequency: [],
-		ages: [],
 		gender: [],
+		kids_welcome: [],
 		ambiance: [],
 		event_type: [],
 		support_type: [],
