@@ -532,6 +532,28 @@ router.post("/update", (req, res) => {
 						return res.status(500).json({msg_colors: "Database error."});
 					});
 			}
+			else if(req.body.default_category !== undefined){
+				user.default_category = req.body.default_category;
+				user.save()
+					.then(() => {
+						// modified
+						return res.status(200).json({msg_default_category: "Modified!"});
+					})
+					.catch(() => {
+						return res.status(500).json({msg_default_category: "Database error."});
+					});
+			}
+			else if(req.body.default_radius !== undefined){
+				user.default_radius = req.body.default_radius;
+				user.save()
+					.then(() => {
+						// modified
+						return res.status(200).json({msg_default_radius: "Modified!"});
+					})
+					.catch(() => {
+						return res.status(500).json({msg_default_radius: "Database error."});
+					});
+			}
 			else if(req.body.admin_email !== undefined){
 				if(isEmpty(req.body.admin_email) && isEmpty(user.phone)){
 					return res.status(400).json({msg_admin_email: "Email OR phone is required."});
