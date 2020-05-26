@@ -1097,8 +1097,10 @@ router.post("/deletemulti", async (req, res) => {
     days: '0000000',
     times: '000',
     frequency: '00000',
+    hosting: '00',
     ages: '00000000000',
     gender: '000',
+    kids_welcome: '00',
     parking: '00000',
     ministries: '0000000',
     other_services: '000000',
@@ -1109,21 +1111,23 @@ router.post("/deletemulti", async (req, res) => {
 }
 
  */
-const filters1 = ['days', 'times', 'ages', 'parking', 'ministries', 'other_services'];
-const filters2 = ['frequency', 'gender', 'ambiance', 'event_type', 'support_type'];
+const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
+const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
 	console.log('search criteria:', req.body);
 
 	let counts = {
 		days: [], // 0 - (filter['days'].length - 1)
 		times: [],
+		hosting: [],
+		ages: [],
 		parking: [],
 		ministries: [],
 		other_services: [],
 
 		frequency: [],
-		ages: [],
 		gender: [],
+		kids_welcome: [],
 		ambiance: [],
 		event_type: [],
 		support_type: [],
@@ -1170,7 +1174,7 @@ router.post("/search", (req, res) => {
 			// filtering
 			let is_passed = true;
 			for(const filter1 of filters1){
-				if(!is_passed)
+				if(!is_passed || comm[filter1] === undefined)
 					continue;
 				const dat1_value = parseInt(comm[filter1], 2);
 				const pat1_value = parseInt(req.body.filter[filter1], 2);
@@ -1183,7 +1187,7 @@ router.post("/search", (req, res) => {
 
 			if(is_passed){
 				for(const filter2 of filters2){
-					if(!is_passed)
+					if(!is_passed || comm[filter2] === undefined)
 						continue;
 					const pat2_value = parseInt(req.body.filter[filter2], 2);
 					if(pat2_value === 0)
@@ -1205,6 +1209,9 @@ router.post("/search", (req, res) => {
 			// is this comm countable for each filter item?
 			if(is_passed){
 				for(const key of keys){
+					if(comm[key] === undefined)
+						continue;
+
 					// comm[key] -> 001010
 					const values = comm[key].split("");
 					for(let i = 0; i < values.length; i++){
