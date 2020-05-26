@@ -1111,6 +1111,23 @@ router.post("/deletemulti", async (req, res) => {
 }
 
  */
+
+const filter_length = {
+	days: 7,
+	times: 3,
+	hosting: 2,
+	ages: 11,
+	parking: 5,
+	ministries: 7,
+	other_services: 6,
+
+	frequency: 5,
+	gender: 4,
+	kids_welcome: 2,
+	ambiance: 4,
+	event_type: 8,
+	support_type: 5,
+};
 const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
@@ -1174,9 +1191,10 @@ router.post("/search", (req, res) => {
 			// filtering
 			let is_passed = true;
 			for(const filter1 of filters1){
-				if(!is_passed || comm[filter1] === undefined)
+				if(!is_passed)
 					continue;
-				const dat1_value = parseInt(comm[filter1], 2);
+				const dat_filter = comm[filter1] === undefined ? '0'.repeat(filter_length[filter1]) : comm[filter1];
+				const dat1_value = parseInt(dat_filter, 2);
 				const pat1_value = parseInt(req.body.filter[filter1], 2);
 				if(pat1_value === 0)
 					continue;
@@ -1187,14 +1205,14 @@ router.post("/search", (req, res) => {
 
 			if(is_passed){
 				for(const filter2 of filters2){
-					if(!is_passed || comm[filter2] === undefined)
+					if(!is_passed)
 						continue;
 					const pat2_value = parseInt(req.body.filter[filter2], 2);
 					if(pat2_value === 0)
 						continue;
 
-					let dat_filter = comm[filter2];
-					if(req.body.filter[filter2].length !== comm[filter2].length){
+					let dat_filter = comm[filter2] === undefined ? '0'.repeat(filter_length[filter2]) : comm[filter2];
+					if(req.body.filter[filter2].length !== dat_filter.length){
 						// console.log("old format", req.body.filter[filter2], dat_filter);
 						dat_filter = dat_filter + "0";
 					}
