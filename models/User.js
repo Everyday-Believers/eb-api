@@ -59,7 +59,7 @@ const UserSchema = new Schema({
 	},
 	default_category: {
 		type: String,
-		default: 'undefined',
+		default: '',
 	},
 	default_radius: {
 		type: Number,
