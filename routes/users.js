@@ -544,13 +544,15 @@ router.post("/update", (req, res) => {
 					});
 			}
 			else if(req.body.default_radius !== undefined){
-				user.default_radius = req.body.default_radius;
+				user.default_radius = req.body.default_radius === 'null' ? null : req.body.default_radius;
 				user.save()
 					.then(() => {
 						// modified
+						console.log('ok');
 						return res.status(200).json({msg_default_radius: "Modified!"});
 					})
 					.catch(() => {
+						console.log('fail');
 						return res.status(500).json({msg_default_radius: "Database error."});
 					});
 			}
