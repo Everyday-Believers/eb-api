@@ -57,6 +57,14 @@ const UserSchema = new Schema({
 		type: Object,
 		required: false,
 	},
+	default_category: {
+		type: String,
+		default: 'undefined',
+	},
+	default_radius: {
+		type: Number,
+		default: null,
+	},
 	colors: {
 		type: Object,
 		default: null,
