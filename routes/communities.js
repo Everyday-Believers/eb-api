@@ -1174,7 +1174,7 @@ router.post("/search", (req, res) => {
 			// filtering
 			let is_passed = true;
 			for(const filter1 of filters1){
-				if(!is_passed)
+				if(!is_passed || comm[filter1] === undefined)
 					continue;
 				const dat1_value = parseInt(comm[filter1], 2);
 				const pat1_value = parseInt(req.body.filter[filter1], 2);
@@ -1187,7 +1187,7 @@ router.post("/search", (req, res) => {
 
 			if(is_passed){
 				for(const filter2 of filters2){
-					if(!is_passed)
+					if(!is_passed || comm[filter2] === undefined)
 						continue;
 					const pat2_value = parseInt(req.body.filter[filter2], 2);
 					if(pat2_value === 0)
@@ -1209,6 +1209,9 @@ router.post("/search", (req, res) => {
 			// is this comm countable for each filter item?
 			if(is_passed){
 				for(const key of keys){
+					if(comm[key] === undefined)
+						continue;
+
 					// comm[key] -> 001010
 					const values = comm[key].split("");
 					for(let i = 0; i < values.length; i++){
