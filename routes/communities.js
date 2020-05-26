@@ -1133,6 +1133,8 @@ const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type
 router.post("/search", (req, res) => {
 	console.log('search criteria:', req.body);
 
+	let results = [];
+	let categories = [];
 	let counts = {
 		days: [], // 0 - (filter['days'].length - 1)
 		times: [],
@@ -1149,7 +1151,6 @@ router.post("/search", (req, res) => {
 		event_type: [],
 		support_type: [],
 	};
-	let results = [];
 
 	// initialize counters
 	const keys = Object.keys(counts);
@@ -1184,7 +1185,11 @@ router.post("/search", (req, res) => {
 			if(dist > (req.body.radius === null ? 5000 : req.body.radius))
 				continue;
 
-			// check the name
+			// check the category
+			if(!categories.includes(comm.category)){
+				categories.push(comm.category);
+			}
+
 			if(!isEmpty(req.body.category) && comm.category !== req.body.category)
 				continue;
 
@@ -1246,7 +1251,7 @@ router.post("/search", (req, res) => {
 
 		console.log(results.length);
 
-		return res.status(200).json({results: results, counts: counts});
+		return res.status(200).json({results: results, counts: counts, categories: categories});
 	});
 });
 
