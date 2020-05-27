@@ -85,15 +85,14 @@ router.post("/getplan", async (req, res) => {
 });
 
 router.post("/verifycoupon", async (req, res) => {
-	console.log(req.body);
 	await stripe.coupons.retrieve(
-		req.body.code.trim(),
+		req.body.code, // coupon id
 		function(err, coupon){
 			if(err){
-				return res.status(400).json({msg_coupon: err, verified: false});
+				return res.status(400).json({verified: false, message: err.toString()});
 			}
 			else{
-				return res.status(200).json({verified: coupon.valid});
+				return res.status(200).json({verified: coupon.valid, amount_off: coupon.amount_off, percent_off: coupon.percent_off});
 			}
 		});
 });
