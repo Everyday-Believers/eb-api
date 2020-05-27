@@ -686,6 +686,7 @@ router.post("/activatemulti", async (req, res) => {
 								// Create one-off invoice from the existing invoice items.
 								last_invoice = await stripe.invoices.create({
 										customer: user.billing_info.id,
+										// coupon: req.body.coupon,
 										auto_advance: true,
 									},
 									async function(err, invo){
