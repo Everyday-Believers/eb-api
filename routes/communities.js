@@ -18,7 +18,7 @@ router.post("/create", (req, res) => {
 	// check the validation of (community_name, category, address)
 	if(isEmpty(community_info.owner_id)){
 		return res.status(400).json({
-			msg_community: "Oops, this error message must not be shown."
+			msg_community: "Oops, this error message should not be shown."
 		});
 	}
 	else if(isEmpty(community_info.community_name)){
@@ -49,10 +49,10 @@ router.post("/create", (req, res) => {
 				}
 				else{ // edit it.
 					community.updateOne(community_info)
-							.then(() => {
-								return res.status(200).json({msg_community: "The community was saved."});
-							})
-							.catch(err => console.log(err));
+						.then(() => {
+							return res.status(200).json({msg_community: "The community was saved."});
+						})
+						.catch(err => console.log(err));
 					console.log("The community modified.");
 				}
 			}
@@ -61,11 +61,11 @@ router.post("/create", (req, res) => {
 					...community_info,
 				});
 				newCommunity
-						.save()
-						.then(() => {
-							return res.status(200).json({msg_community: "The community was created."});
-						})
-						.catch(err => console.log(err));
+					.save()
+					.then(() => {
+						return res.status(200).json({msg_community: "The community was created."});
+					})
+					.catch(err => console.log(err));
 				console.log("New Community created.");
 			}
 		});
@@ -102,20 +102,20 @@ function getDateDiff(prev, next){
 function getNextMonth(current, delta){
 	// end date in next month
 	const num_days = new Date(
-			current.getFullYear(),
-			current.getMonth() + delta + 1,
-			0).getDate();
+		current.getFullYear(),
+		current.getMonth() + delta + 1,
+		0).getDate();
 
 	// get the date in next month.
 	// if that's 2/31, converted to 2/28(=num_days)
 	const next_date = new Date(
-			current.getFullYear(),
-			current.getMonth() + delta,
-			current.getDate() > num_days ? num_days : current.getDate(),
-			current.getHours(),
-			current.getMinutes(),
-			current.getSeconds(),
-			current.getMilliseconds());
+		current.getFullYear(),
+		current.getMonth() + delta,
+		current.getDate() > num_days ? num_days : current.getDate(),
+		current.getHours(),
+		current.getMinutes(),
+		current.getSeconds(),
+		current.getMilliseconds());
 
 	// cycle duration - days between current date and the date in next month.
 	const diff_days = getDateDiff(current, next_date);
@@ -141,16 +141,16 @@ router.post("/setcard", async (req, res) => {
 						description: req.body.description,
 					});
 					user
-							.save()
-							.then(() => {
-								return res.status(200).json({
-									msg: "A customer was created.",
-									customer: user.billing_info,
-								});
-							})
-							.catch(err => {
-								return res.status(500).json({billing: `Error: ${err}`});
+						.save()
+						.then(() => {
+							return res.status(200).json({
+								msg: "A customer was created.",
+								customer: user.billing_info,
 							});
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
 				}
 				else{
 					return res.status(500).json({billing: "No billing information."});
@@ -159,29 +159,29 @@ router.post("/setcard", async (req, res) => {
 			// if exist, change it with token information
 			else{
 				const new_card = await stripe.customers.createSource(
-						user.billing_info.id, // customer
-						{
-							source: req.body.source,
-						}
+					user.billing_info.id, // customer
+					{
+						source: req.body.source,
+					}
 				);
 
 				user.billing_info = await stripe.customers.update(
-						user.billing_info.id, // customer
-						{
-							default_source: new_card.id,
-						}
+					user.billing_info.id, // customer
+					{
+						default_source: new_card.id,
+					}
 				);
 				user
-						.save()
-						.then(() => {
-							return res.status(200).json({
-								msg: "A customer's default card was replaced.",
-								customer: user.billing_info,
-							});
-						})
-						.catch(err => {
-							return res.status(500).json({billing: `Error: ${err}`});
+					.save()
+					.then(() => {
+						return res.status(200).json({
+							msg: "A customer's default card was replaced.",
+							customer: user.billing_info,
 						});
+					})
+					.catch(err => {
+						return res.status(500).json({billing: `Error: ${err}`});
+					});
 			}
 		}
 		else{
@@ -220,35 +220,35 @@ router.post("/activate", async (req, res) => {
 						description: req.body.description,
 					});
 					user
-							.save()
-							.then(() => {
-							})
-							.catch(err => {
-								return res.status(500).json({billing: `Error: ${err}`});
-							});
+						.save()
+						.then(() => {
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
 				}
 				// if exist, change it with token information
 				else{
 					const new_card = await stripe.customers.createSource(
-							user.billing_info.id, // customer
-							{
-								source: req.body.source,
-							}
+						user.billing_info.id, // customer
+						{
+							source: req.body.source,
+						}
 					);
 
 					user.billing_info = await stripe.customers.update(
-							user.billing_info.id, // customer
-							{
-								default_source: new_card.id,
-							}
+						user.billing_info.id, // customer
+						{
+							default_source: new_card.id,
+						}
 					);
 					user
-							.save()
-							.then(() => {
-							})
-							.catch(err => {
-								return res.status(500).json({billing: `Error: ${err}`});
-							});
+						.save()
+						.then(() => {
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
 				}
 			}
 
@@ -266,14 +266,14 @@ router.post("/activate", async (req, res) => {
 						description: req.body.description,
 					});
 					user
-							.save()
-							.then(() => {
-								// Ok, created user was saved in database.
-							})
-							.catch(err => {
-								err_msg = `Error: ${err}`;
-								return res.status(500).json({billing: err_msg});
-							});
+						.save()
+						.then(() => {
+							// Ok, created user was saved in database.
+						})
+						.catch(err => {
+							err_msg = `Error: ${err}`;
+							return res.status(500).json({billing: err_msg});
+						});
 				}
 				else{
 					return res.status(500).json({billing: "No billing information."});
@@ -315,10 +315,10 @@ router.post("/activate", async (req, res) => {
 						let qty = num_act_comms - my_subscriptions.data[0].items.data[0].quantity + 1;
 						if(qty > 0){
 							subscription = await stripe.subscriptions.update(
-									my_subscriptions.data[0].items.data[0].subscription,
-									{
-										quantity: my_subscriptions.data[0].items.data[0].quantity + qty,
-									}
+								my_subscriptions.data[0].items.data[0].subscription,
+								{
+									quantity: my_subscriptions.data[0].items.data[0].quantity + qty,
+								}
 							);
 							if(subscription){
 								console.log("Updated: ", subscription.id);
@@ -378,30 +378,30 @@ router.post("/activate", async (req, res) => {
 								// for each starts with "Remaining..." or "Unused..."
 								for(const invo_item of invoices_to_delete.data){
 									if(invo_item.invoice === null &&
-											(invo_item.description.startsWith("Remaining time on") ||
-													invo_item.description.startsWith("Unused time on"))){
+										(invo_item.description.startsWith("Remaining time on") ||
+											invo_item.description.startsWith("Unused time on"))){
 										// delete it!
 										const deleted_invo_item = await stripe.invoiceItems.del(invo_item.id);
 										console.log("Deleted invo item: ",
-												deleted_invo_item ? deleted_invo_item.id : null);
+											deleted_invo_item ? deleted_invo_item.id : null);
 									}
 								}
 
 								// Create one-off invoice from the existing invoice items.
 								last_invoice = await stripe.invoices.create({
-											customer: user.billing_info.id,
-											auto_advance: true,
-										},
-										async function(err, invo){
-											if(err){
+										customer: user.billing_info.id,
+										auto_advance: true,
+									},
+									async function(err, invo){
+										if(err){
 
-											}
-											else{
-												// Prepare to pay by finalizing the created invoice.
-												await stripe.invoices.finalizeInvoice(invo.id);
-												console.log("One-off invoice: ", invo.id);
-											}
-										});
+										}
+										else{
+											// Prepare to pay by finalizing the created invoice.
+											await stripe.invoices.finalizeInvoice(invo.id);
+											console.log("One-off invoice: ", invo.id);
+										}
+									});
 							}
 							else{
 								is_error = true;
@@ -413,7 +413,7 @@ router.post("/activate", async (req, res) => {
 					 */
 					else{
 						const plan = await stripe.plans.retrieve(
-								config.SUBSCRIBER_MONTHLY_PLAN,
+							config.SUBSCRIBER_MONTHLY_PLAN,
 						);
 
 						subscription = await stripe.subscriptions.create({
@@ -430,14 +430,14 @@ router.post("/activate", async (req, res) => {
 
 						if(subscription && subscription.status !== "incomplete"){
 							const invos = await stripe.invoices.list(
-									{
-										limit: 10,
-										customer: user.billing_info.id,
-										subscription: subscription.id,
-										created: {
-											gte: subscription.created,
-										}
-									},
+								{
+									limit: 10,
+									customer: user.billing_info.id,
+									subscription: subscription.id,
+									created: {
+										gte: subscription.created,
+									}
+								},
 							);
 							if(invos.data.length > 0){
 								last_invoice = invos.data[0];
@@ -459,31 +459,31 @@ router.post("/activate", async (req, res) => {
 						Community.findOne({_id: req.body.community_id}).then(community => {
 							if(community){
 								community.updateOne({activated: true})
-										.then(async () => {
-											/**
-											 * 5. return the updated subscription and an upcoming invoice.
-											 */
-											const uc_invoice = await stripe.invoices.retrieveUpcoming({
-														customer: user.billing_info.id,
-													},
-													(err, invoice) => {
-														if(err){
-															return res.status(400).json({msg_billing: "Error: " + err});
-														}
-														else{
-															return res.status(200).json({
-																msg: "A community was activated successfully.",
-																tickets: user.tickets,
-																customer: user.billing_info,
-																subscription: subscription,
-																last_invoice: last_invoice,
-																upcoming_invoice: invoice,
-																trialing: subscription.status === 'trialing',
-															});
-														}
+									.then(async () => {
+										/**
+										 * 5. return the updated subscription and an upcoming invoice.
+										 */
+										const uc_invoice = await stripe.invoices.retrieveUpcoming({
+												customer: user.billing_info.id,
+											},
+											(err, invoice) => {
+												if(err){
+													return res.status(400).json({msg_billing: "Error: " + err});
+												}
+												else{
+													return res.status(200).json({
+														msg: "A community was activated successfully.",
+														tickets: user.tickets,
+														customer: user.billing_info,
+														subscription: subscription,
+														last_invoice: last_invoice,
+														upcoming_invoice: invoice,
+														trialing: subscription.status === 'trialing',
 													});
-										})
-										.catch(err => res.status(400).json({msg_community: err.toString()}));
+												}
+											});
+									})
+									.catch(err => res.status(400).json({msg_community: err.toString()}));
 							}
 							else{
 								return res.status(400).json({msg_community: "The community could not be activated."});
@@ -516,35 +516,35 @@ router.post("/activatemulti", async (req, res) => {
 						description: req.body.description,
 					});
 					user
-							.save()
-							.then(() => {
-							})
-							.catch(err => {
-								return res.status(500).json({billing: `Error: ${err}`});
-							});
+						.save()
+						.then(() => {
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
 				}
 				// if exist, change it with token information
 				else{
 					const new_card = await stripe.customers.createSource(
-							user.billing_info.id, // customer
-							{
-								source: req.body.source,
-							}
+						user.billing_info.id, // customer
+						{
+							source: req.body.source,
+						}
 					);
 
 					user.billing_info = await stripe.customers.update(
-							user.billing_info.id, // customer
-							{
-								default_source: new_card.id,
-							}
+						user.billing_info.id, // customer
+						{
+							default_source: new_card.id,
+						}
 					);
 					user
-							.save()
-							.then(() => {
-							})
-							.catch(err => {
-								return res.status(500).json({billing: `Error: ${err}`});
-							});
+						.save()
+						.then(() => {
+						})
+						.catch(err => {
+							return res.status(500).json({billing: `Error: ${err}`});
+						});
 				}
 			}
 
@@ -562,14 +562,14 @@ router.post("/activatemulti", async (req, res) => {
 						description: req.body.description,
 					});
 					user
-							.save()
-							.then(() => {
-								// Ok, created user was saved in database.
-							})
-							.catch(err => {
-								err_msg = `Error: ${err}`;
-								return res.status(500).json({billing: err_msg});
-							});
+						.save()
+						.then(() => {
+							// Ok, created user was saved in database.
+						})
+						.catch(err => {
+							err_msg = `Error: ${err}`;
+							return res.status(500).json({billing: err_msg});
+						});
 				}
 				else{
 					return res.status(500).json({billing: "No billing information."});
@@ -611,10 +611,10 @@ router.post("/activatemulti", async (req, res) => {
 						let qty = num_act_comms - my_subscriptions.data[0].items.data[0].quantity + req.body.community_ids.length;
 						if(qty > 0){
 							subscription = await stripe.subscriptions.update(
-									my_subscriptions.data[0].items.data[0].subscription,
-									{
-										quantity: my_subscriptions.data[0].items.data[0].quantity + qty,
-									}
+								my_subscriptions.data[0].items.data[0].subscription,
+								{
+									quantity: my_subscriptions.data[0].items.data[0].quantity + qty,
+								}
 							);
 							if(subscription){
 								console.log("Updated: ", subscription.id);
@@ -674,30 +674,31 @@ router.post("/activatemulti", async (req, res) => {
 								// for each starts with "Remaining..." or "Unused..."
 								for(const invo_item of invoices_to_delete.data){
 									if(invo_item.invoice === null &&
-											(invo_item.description.startsWith("Remaining time on") ||
-													invo_item.description.startsWith("Unused time on"))){
+										(invo_item.description.startsWith("Remaining time on") ||
+											invo_item.description.startsWith("Unused time on"))){
 										// delete it!
 										const deleted_invo_item = await stripe.invoiceItems.del(invo_item.id);
 										console.log("Deleted invo item: ",
-												deleted_invo_item ? deleted_invo_item.id : null);
+											deleted_invo_item ? deleted_invo_item.id : null);
 									}
 								}
 
 								// Create one-off invoice from the existing invoice items.
 								last_invoice = await stripe.invoices.create({
-											customer: user.billing_info.id,
-											auto_advance: true,
-										},
-										async function(err, invo){
-											if(err){
+										customer: user.billing_info.id,
+										// coupon: req.body.coupon,
+										auto_advance: true,
+									},
+									async function(err, invo){
+										if(err){
 
-											}
-											else{
-												// Prepare to pay by finalizing the created invoice.
-												await stripe.invoices.finalizeInvoice(invo.id);
-												console.log("One-off invoice: ", invo.id);
-											}
-										});
+										}
+										else{
+											// Prepare to pay by finalizing the created invoice.
+											await stripe.invoices.finalizeInvoice(invo.id);
+											console.log("One-off invoice: ", invo.id);
+										}
+									});
 							}
 							else{
 								is_error = true;
@@ -709,7 +710,7 @@ router.post("/activatemulti", async (req, res) => {
 					 */
 					else{
 						const plan = await stripe.plans.retrieve(
-								config.SUBSCRIBER_MONTHLY_PLAN,
+							config.SUBSCRIBER_MONTHLY_PLAN,
 						);
 
 						subscription = await stripe.subscriptions.create({
@@ -727,14 +728,14 @@ router.post("/activatemulti", async (req, res) => {
 
 						if(subscription && subscription.status !== "incomplete"){
 							const invos = await stripe.invoices.list(
-									{
-										limit: 10,
-										customer: user.billing_info.id,
-										subscription: subscription.id,
-										created: {
-											gte: subscription.created,
-										}
-									},
+								{
+									limit: 10,
+									customer: user.billing_info.id,
+									subscription: subscription.id,
+									created: {
+										gte: subscription.created,
+									}
+								},
 							);
 							if(invos.data.length > 0){
 								last_invoice = invos.data[0];
@@ -758,24 +759,24 @@ router.post("/activatemulti", async (req, res) => {
 						 * 5. return the updated subscription and an upcoming invoice.
 						 */
 						const uc_invoice = await stripe.invoices.retrieveUpcoming({
-									customer: user.billing_info.id,
-								},
-								(err, invoice) => {
-									if(err){
-										return res.status(400).json({msg_billing: "Error: " + err});
-									}
-									else{
-										return res.status(200).json({
-											msg: "A community was activated successfully.",
-											tickets: user.tickets,
-											customer: user.billing_info,
-											subscription: subscription,
-											last_invoice: last_invoice,
-											upcoming_invoice: invoice,
-											trialing: subscription.status === 'trialing',
-										});
-									}
-								});
+								customer: user.billing_info.id,
+							},
+							(err, invoice) => {
+								if(err){
+									return res.status(400).json({msg_billing: "Error: " + err});
+								}
+								else{
+									return res.status(200).json({
+										msg: "A community was activated successfully.",
+										tickets: user.tickets,
+										customer: user.billing_info,
+										subscription: subscription,
+										last_invoice: last_invoice,
+										upcoming_invoice: invoice,
+										trialing: subscription.status === 'trialing',
+									});
+								}
+							});
 					}
 				});
 			}
@@ -804,14 +805,14 @@ router.post("/deactivate", (req, res) => {
 				Community.findOne({_id: req.body.community_id}).then(community => {
 					if(community){
 						community.updateOne({activated: false})
-								.then(async () => {
-									return res.status(200).json({
-										msg: "No data.",
-										subscription: null,
-										upcoming_invoice: null,
-									});
-								})
-								.catch(err => res.status(400).json({msg_community: err.toString()}));
+							.then(async () => {
+								return res.status(200).json({
+									msg: "No data.",
+									subscription: null,
+									upcoming_invoice: null,
+								});
+							})
+							.catch(err => res.status(400).json({msg_community: err.toString()}));
 					}
 					else{
 						return res.status(400).json({msg_community: "The community could not be deactivated."});
@@ -845,10 +846,10 @@ router.post("/deactivate", (req, res) => {
 					let subscription = null;
 					if(my_subscriptions.data.length > 0){
 						subscription = await stripe.subscriptions.update(
-								my_subscriptions.data[0].items.data[0].subscription,
-								{
-									quantity: num_act_comms > 0 ? num_act_comms - 1 : 0,
-								}
+							my_subscriptions.data[0].items.data[0].subscription,
+							{
+								quantity: num_act_comms > 0 ? num_act_comms - 1 : 0,
+							}
 						);
 						if(subscription){
 							console.log("Deactivate - Updated: ", subscription.id);
@@ -880,12 +881,12 @@ router.post("/deactivate", (req, res) => {
 							// for each starts with "Remaining..." or "Unused..."
 							for(const invo_item of invoices_to_delete.data){
 								if(invo_item.invoice === null &&
-										(invo_item.description.startsWith("Remaining time on") ||
-												invo_item.description.startsWith("Unused time on"))){
+									(invo_item.description.startsWith("Remaining time on") ||
+										invo_item.description.startsWith("Unused time on"))){
 									// delete it!
 									const deleted_invo_item = await stripe.invoiceItems.del(invo_item.id);
 									console.log("Deleted invo item: ",
-											deleted_invo_item ? deleted_invo_item.id : null);
+										deleted_invo_item ? deleted_invo_item.id : null);
 								}
 							}
 						}
@@ -897,28 +898,28 @@ router.post("/deactivate", (req, res) => {
 					Community.findOne({_id: req.body.community_id}).then(community => {
 						if(community){
 							community.updateOne({activated: false})
-									.then(async () => {
-										/**
-										 * 5. return the updated subscription and an upcoming invoice.
-										 */
-										const uc_invoice = await stripe.invoices.retrieveUpcoming({
-													customer: user.billing_info.id,
-												},
-												(err, invoice) => {
-													if(err){
-														return res.status(400).json({msg_billing: "Error: " + err});
-													}
-													else{
-														return res.status(200).json({
-															msg: "A community was deactivated.",
-															tickets: user.tickets,
-															subscription: subscription,
-															upcoming_invoice: invoice,
-														});
-													}
+								.then(async () => {
+									/**
+									 * 5. return the updated subscription and an upcoming invoice.
+									 */
+									const uc_invoice = await stripe.invoices.retrieveUpcoming({
+											customer: user.billing_info.id,
+										},
+										(err, invoice) => {
+											if(err){
+												return res.status(400).json({msg_billing: "Error: " + err});
+											}
+											else{
+												return res.status(200).json({
+													msg: "A community was deactivated.",
+													tickets: user.tickets,
+													subscription: subscription,
+													upcoming_invoice: invoice,
 												});
-									})
-									.catch(err => res.status(400).json({msg_community: err.toString()}));
+											}
+										});
+								})
+								.catch(err => res.status(400).json({msg_community: err.toString()}));
 						}
 						else{
 							return res.status(400).json({msg_community: "The community could not be deactivated."});
@@ -981,10 +982,10 @@ router.post("/deactivatemulti", (req, res) => {
 					let subscription = null;
 					if(my_subscriptions.data.length > 0){
 						subscription = await stripe.subscriptions.update(
-								my_subscriptions.data[0].items.data[0].subscription,
-								{
-									quantity: qty > 0 ? qty : 0,
-								}
+							my_subscriptions.data[0].items.data[0].subscription,
+							{
+								quantity: qty > 0 ? qty : 0,
+							}
 						);
 						if(subscription){
 							console.log("Deactivate - Updated: ", subscription.id);
@@ -1016,12 +1017,12 @@ router.post("/deactivatemulti", (req, res) => {
 							// for each starts with "Remaining..." or "Unused..."
 							for(const invo_item of invoices_to_delete.data){
 								if(invo_item.invoice === null &&
-										(invo_item.description.startsWith("Remaining time on") ||
-												invo_item.description.startsWith("Unused time on"))){
+									(invo_item.description.startsWith("Remaining time on") ||
+										invo_item.description.startsWith("Unused time on"))){
 									// delete it!
 									const deleted_invo_item = await stripe.invoiceItems.del(invo_item.id);
 									console.log("Deleted invo item: ",
-											deleted_invo_item ? deleted_invo_item.id : null);
+										deleted_invo_item ? deleted_invo_item.id : null);
 								}
 							}
 						}
@@ -1035,21 +1036,21 @@ router.post("/deactivatemulti", (req, res) => {
 					 * 5. return the updated subscription and an upcoming invoice.
 					 */
 					const uc_invoice = await stripe.invoices.retrieveUpcoming({
-								customer: user.billing_info.id,
-							},
-							(err, invoice) => {
-								if(err){
-									return res.status(400).json({msg_billing: "Error: " + err});
-								}
-								else{
-									return res.status(200).json({
-										msg: "A community was deactivated.",
-										tickets: user.tickets,
-										subscription: subscription,
-										upcoming_invoice: invoice,
-									});
-								}
-							});
+							customer: user.billing_info.id,
+						},
+						(err, invoice) => {
+							if(err){
+								return res.status(400).json({msg_billing: "Error: " + err});
+							}
+							else{
+								return res.status(200).json({
+									msg: "A community was deactivated.",
+									tickets: user.tickets,
+									subscription: subscription,
+									upcoming_invoice: invoice,
+								});
+							}
+						});
 				});
 			}
 		}
@@ -1069,10 +1070,10 @@ router.post("/delete", (req, res) => {
 	Community.findOne({_id: req.body.community_id}).then(community => {
 		if(community){
 			community.remove()
-					.then(() => {
-						return res.status(200).json({msg_community: "A community was deleted."});
-					})
-					.catch(err => res.status(400).json({msg_community: err.toString()}));
+				.then(() => {
+					return res.status(200).json({msg_community: "A community was deleted."});
+				})
+				.catch(err => res.status(400).json({msg_community: err.toString()}));
 		}
 		else{
 			return res.status(400).json({msg_community: "The community could not be deleted."});
@@ -1097,8 +1098,10 @@ router.post("/deletemulti", async (req, res) => {
     days: '0000000',
     times: '000',
     frequency: '00000',
+    hosting: '00',
     ages: '00000000000',
     gender: '000',
+    kids_welcome: '00',
     parking: '00000',
     ministries: '0000000',
     other_services: '000000',
@@ -1109,35 +1112,64 @@ router.post("/deletemulti", async (req, res) => {
 }
 
  */
-const filters1 = ['days', 'times', 'ages', 'parking', 'ministries', 'other_services'];
-const filters2 = ['frequency', 'gender', 'ambiance', 'event_type', 'support_type'];
+
+const filter_length = {
+	days: 7,
+	times: 3,
+	hosting: 2,
+	ages: 11,
+	parking: 5,
+	ministries: 7,
+	other_services: 6,
+
+	frequency: 5,
+	gender: 4,
+	kids_welcome: 2,
+	ambiance: 4,
+	event_type: 8,
+	support_type: 5,
+};
+const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
+const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
+	console.log('search criteria:', req.body);
 
-	console.log(req.body);
-
+	let results = [];
+	let categories = [];
 	let counts = {
 		days: [], // 0 - (filter['days'].length - 1)
 		times: [],
+		hosting: [],
+		ages: [],
 		parking: [],
 		ministries: [],
 		other_services: [],
 
 		frequency: [],
-		ages: [],
 		gender: [],
+		kids_welcome: [],
 		ambiance: [],
 		event_type: [],
 		support_type: [],
 	};
-	let results = [];
 
+	// initialize counters
 	const keys = Object.keys(counts);
 	for(const key of keys){
 		// comm[key] -> 001010
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
-	Community.find({activated: true}).then(comms => {
+	const base_criteria = req.body.filter.owner_id === undefined || req.body.filter.owner_id === '' ? {
+		activated: true,
+	} : {
+		activated: true,
+		owner_id: req.body.filter.owner_id,
+	};
+
+	console.log('base criteria:', base_criteria);
+
+	Community.find(base_criteria).then(comms => {
 		for(let comm of comms){
 			if(isEmpty(comm.coordinate))
 				continue;
@@ -1154,7 +1186,11 @@ router.post("/search", (req, res) => {
 			if(dist > (req.body.radius === null ? 5000 : req.body.radius))
 				continue;
 
-			// check the name
+			// check the category
+			if(!categories.includes(comm.category)){
+				categories.push(comm.category);
+			}
+
 			if(!isEmpty(req.body.category) && comm.category !== req.body.category)
 				continue;
 
@@ -1163,7 +1199,8 @@ router.post("/search", (req, res) => {
 			for(const filter1 of filters1){
 				if(!is_passed)
 					continue;
-				const dat1_value = parseInt(comm[filter1], 2);
+				const dat_filter = comm[filter1] === undefined ? '0'.repeat(filter_length[filter1]) : comm[filter1];
+				const dat1_value = parseInt(dat_filter, 2);
 				const pat1_value = parseInt(req.body.filter[filter1], 2);
 				if(pat1_value === 0)
 					continue;
@@ -1176,10 +1213,17 @@ router.post("/search", (req, res) => {
 				for(const filter2 of filters2){
 					if(!is_passed)
 						continue;
-					const dat2_value = parseInt(comm[filter2], 2);
 					const pat2_value = parseInt(req.body.filter[filter2], 2);
 					if(pat2_value === 0)
 						continue;
+
+					let dat_filter = comm[filter2] === undefined ? '0'.repeat(filter_length[filter2]) : comm[filter2];
+					if(req.body.filter[filter2].length !== dat_filter.length){
+						// console.log("old format", req.body.filter[filter2], dat_filter);
+						dat_filter = dat_filter + "0";
+					}
+
+					const dat2_value = parseInt(dat_filter, 2);
 					if(dat2_value !== pat2_value){
 						is_passed = false;
 					}
@@ -1189,6 +1233,9 @@ router.post("/search", (req, res) => {
 			// is this comm countable for each filter item?
 			if(is_passed){
 				for(const key of keys){
+					if(comm[key] === undefined)
+						continue;
+
 					// comm[key] -> 001010
 					const values = comm[key].split("");
 					for(let i = 0; i < values.length; i++){
@@ -1205,7 +1252,7 @@ router.post("/search", (req, res) => {
 
 		console.log(results.length);
 
-		return res.status(200).json({results: results, counts: counts});
+		return res.status(200).json({results: results, counts: counts, categories: categories});
 	});
 });
 

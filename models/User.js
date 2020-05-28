@@ -25,6 +25,30 @@ const UserSchema = new Schema({
 		type: String,
 		required: false,
 	},
+	is_organization: {
+		type: Boolean,
+		default: false,
+	},
+	organization_name: {
+		type: String,
+		required: false,
+	},
+	website: {
+		type: String,
+		default: '',
+	},
+	facebook: {
+		type: String,
+		default: '',
+	},
+	twitter: {
+		type: String,
+		default: '',
+	},
+	instagram: {
+		type: String,
+		default: '',
+	},
 	zip_code: {
 		type: String,
 		required: false,
@@ -32,6 +56,18 @@ const UserSchema = new Schema({
 	location: {
 		type: Object,
 		required: false,
+	},
+	default_category: {
+		type: String,
+		default: '',
+	},
+	default_radius: {
+		type: Number,
+		default: null,
+	},
+	colors: {
+		type: Object,
+		default: null,
 	},
 	email: { // for login. in user info
 		type: String,
