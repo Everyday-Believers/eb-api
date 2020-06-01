@@ -9,10 +9,11 @@ const users = require("./routes/users");
 const communities = require("./routes/communities");
 const stripepay = require("./routes/stripe-pay");
 const testroute = require("./routes/test-route");
+const config = require("./config");
 
 app.use(
 	cors({
-		origin: "*",
+		origin: config.FRONT_URL,
 	})
 );
 
