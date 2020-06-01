@@ -11,7 +11,7 @@ module.exports = {
 	/**
 	 * Secret key for JWT
 	 */
-	SECRET_KEY: "Yw6#ew*7$&fgbFu",
+	SECRET_KEY: process.env.JWT_KEY,
 
 	/**
 	 * This setting is used only for the content of the mails with link to ... (in forgot-password)
@@ -21,10 +21,9 @@ module.exports = {
 	/**
 	 * TODO: must be replaced for production
 	 * FindYourChurch Mailer
-	 * This fake account was generated on https://ethereal.email/ for testing purposes.
 	 */
-	MAIL_SG_API: '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',
-	MAIL_SENDER: 'FindYourChurch <dont-reply@findyourchurch.org>',
+	MAIL_SG_API: process.env.SEND_GRID_API_KEY,
+	MAIL_SENDER: process.env.MAIL_SENDER_ADDRESS,
 
 	/**
 	 * TODO: must be replaced for production
@@ -32,8 +31,7 @@ module.exports = {
 	 * This key must be only here securely.
 	 *
 	 * DO NOT SHARE THIS KEY EXTERNALLY.
-	 * Publishable key: pk_live_nPL4q6SyxeqSknHK2Hs3wHta
 	 */
-	STRIPE_SK: "sk_test_TfCg96voiaBUAmLg9odvjT7y", // of findyourchurch.org
-	SUBSCRIBER_MONTHLY_PLAN: "plan_HDYf9XONMdKES8", // "plan_FKP4sKe1DC6uMP", // can use this for the production?
+	STRIPE_SK: process.env.STRIPE_SK,
+	SUBSCRIBER_MONTHLY_PLAN: process.env.STRIPE_MONTHLY_PLAN,
 };
