@@ -127,7 +127,7 @@ function getNextMonth(current, delta){
 }
 
 router.post("/setcard", async (req, res) => {
-	User.findOne({email: req.body.email}).then(async (user) => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(async (user) => {
 		if(user){
 			let is_error = false;
 			// if no billing in db, create it.
@@ -135,7 +135,7 @@ router.post("/setcard", async (req, res) => {
 				if(req.body.source !== null){
 					user.billing_info = await stripe.customers.create({
 						source: req.body.source,
-						email: req.body.email,
+						email: req.body.email.toLowerCase(),
 						name: req.body.name,
 						description: req.body.description,
 					});
@@ -214,7 +214,7 @@ router.post("/activate", async (req, res) => {
 				if(user.billing_info === undefined){
 					user.billing_info = await stripe.customers.create({
 						source: req.body.source,
-						email: req.body.email,
+						email: req.body.email.toLowerCase(),
 						name: req.body.name,
 						description: req.body.description,
 					});
@@ -260,7 +260,7 @@ router.post("/activate", async (req, res) => {
 				if(req.body.source !== null){
 					user.billing_info = await stripe.customers.create({
 						source: req.body.source,
-						email: req.body.email,
+						email: req.body.email.toLowerCase(),
 						name: req.body.name,
 						description: req.body.description,
 					});
@@ -510,7 +510,7 @@ router.post("/activatemulti", async (req, res) => {
 				if(user.billing_info === undefined){
 					user.billing_info = await stripe.customers.create({
 						source: req.body.source,
-						email: req.body.email,
+						email: req.body.email.toLowerCase(),
 						name: req.body.name,
 						description: req.body.description,
 					});
@@ -556,7 +556,7 @@ router.post("/activatemulti", async (req, res) => {
 				if(req.body.source !== null){
 					user.billing_info = await stripe.customers.create({
 						source: req.body.source,
-						email: req.body.email,
+						email: req.body.email.toLowerCase(),
 						name: req.body.name,
 						description: req.body.description,
 					});
