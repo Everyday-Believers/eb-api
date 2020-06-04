@@ -62,9 +62,8 @@ router.post("/register", (req, res) => {
 								newUser
 									.save()
 									.then(user => {
-										/*
 										// send a mail to verify
-										const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+										const key = "VE" + base64.encode(btoa(user.email) + btoa(user.registered_at.toString()));
 										const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
 										// Add new pending to verify email
@@ -79,12 +78,12 @@ router.post("/register", (req, res) => {
 												const mailOptions = {
 													from: config.MAIL_SENDER,
 													to: req.body.email,
-													subject: 'FindYourChurch: Verify your email please.',
+													subject: 'Please verify email address',
 													html: `
 															<h2>Hi, ${user.fname}</h2>
 															<h4>Thank you for signing up.</h4>
 															To verify your account, click:
-															<p>
+															<p style="max-width: 100%;">
 																<a href="${verify_link}">${verify_link}</a>
 															</p>
 														`
@@ -100,7 +99,6 @@ router.post("/register", (req, res) => {
 												});
 											})
 											.catch(err => console.log(err));
-										*/
 
 										res.status(200).json({
 											msg_register: "Your organization account has been created successfully."
@@ -596,7 +594,7 @@ router.post("/verifyemail", (req, res) => {
 	// generate new password
 	User.findOne({email: req.body.email}).then(user => {
 		if(user){
-			const key = "VE" + base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+			const key = "VE" + base64.encode(btoa(user.email) + btoa(user.registered_at.toString()));
 			const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
 			// Add new pending to reset the password
@@ -611,7 +609,7 @@ router.post("/verifyemail", (req, res) => {
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'FindYourChurch: Verify your email please.',
+						subject: 'Please verify email address',
 						html: `
 							<h2>Hi, ${user.fname}</h2>
 							<h4>Thank you for verification</h4>
