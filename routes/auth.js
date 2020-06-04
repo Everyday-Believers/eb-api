@@ -645,12 +645,11 @@ router.post("/verifyemail", (req, res) => {
 });
 
 router.post("/doverifyemail", (req, res) => {
-	console.log(req.body);
 	VerifyPending.findOne({key: req.body.key}).then(pending => {
 		if(pending){
 			const t1 = pending.pended_at;
 			const t2 = new Date(Date.now());
-			const diff = t2.getTime() - t1.getTime() - config.PENDING_EXPIRATION; // in milliseconds
+			const diff = t2.getTime() - t1.getTime() - config.VERIFY_EXPIRATION; // in milliseconds
 			if(diff > 0){ // if expired
 				// remove it from pending list.
 				pending.remove();
