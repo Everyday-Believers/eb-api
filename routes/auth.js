@@ -32,7 +32,7 @@ router.post("/register", (req, res) => {
 		return res.status(400).json(msg);
 	}
 
-	User.findOne({email: req.body.email}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
 		if(user){
 			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
 		}
@@ -46,7 +46,7 @@ router.post("/register", (req, res) => {
 						const newUser = new User({
 							fname: req.body.fname,
 							lname: req.body.lname,
-							email: req.body.email,
+							email: req.body.email.toLowerCase(),
 							admin_email: req.body.email,
 							password: req.body.password,
 							is_organization: req.body.is_organization,
@@ -63,13 +63,13 @@ router.post("/register", (req, res) => {
 									.save()
 									.then(user => {
 										// send a mail to verify
-										const key = "VE" + base64.encode(btoa(user.email) + btoa(user.registered_at.toString()));
+										const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
 										const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
 										// Add new pending to verify email
 										const newPending = new VerifyPending({
 											key: key,
-											email: req.body.email,
+											email: req.body.email.toLowerCase(),
 										});
 										newPending
 											.save()
@@ -114,7 +114,7 @@ router.post("/register", (req, res) => {
 				const newUser = new User({
 					fname: req.body.fname,
 					lname: req.body.lname,
-					email: req.body.email,
+					email: req.body.email.toLowerCase(),
 					admin_email: req.body.email,
 					password: req.body.password,
 				});
@@ -142,7 +142,7 @@ router.post("/register", (req, res) => {
  * api - google user register
  */
 router.post("/googleregister", (req, res) => {
-	User.findOne({email: req.body.email}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
 		if(user){
 			return res.status(400).json({email: "Email already exists"});
 		}
@@ -150,7 +150,7 @@ router.post("/googleregister", (req, res) => {
 			const newUser = new User({
 				fname: req.body.fname,
 				lname: req.body.lname,
-				email: req.body.email,
+				email: req.body.email.toLowerCase(),
 				password: "",
 				google_id: req.body.google_id
 			});
@@ -176,7 +176,7 @@ router.post("/login", (req, res) => {
 	const password = req.body.password;
 
 	// Find user by email
-	User.findOne({email: email}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${email}`, 'i')}}).then(user => {
 		// Check if user exists
 		if(!user){
 			return res.status(400).json({msg_login_email: "Email not found"});
@@ -191,7 +191,7 @@ router.post("/login", (req, res) => {
 						fname: user.fname,
 						lname: user.lname,
 						location: user.location,
-						email: user.email,
+						email: user.email.toLowerCase(),
 						registered_at: user.registered_at,
 					};
 
@@ -225,7 +225,7 @@ router.post("/login", (req, res) => {
 router.post("/userinfo", (req, res) => {
 	User.findOne({_id: req.body.user_id}, '-password -google_id -facebook_id -tickets -ticket_expiry').then(user => {
 		if(user){
-			VerifyPending.findOne({email: user.email}, '-email -key').sort({pended_at: 'desc'}).then(pending => {
+			VerifyPending.findOne({email: {$regex: new RegExp(`^${user.email}`, 'i')}}, '-email -key').sort({pended_at: 'desc'}).then(pending => {
 				if(pending){
 					return res.status(200).json({
 						...user._doc,
@@ -284,7 +284,7 @@ router.post("/resetpassword", (req, res) => {
 	let user = {
 		link: config.FRONT_URL + '/reset-password/',
 	};
-	User.findOne({email: req.body.email}).then(usr => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(usr => {
 		if(usr){
 			user.fname = usr.fname;
 			const link_key = base64.encode(btoa(usr.email) + btoa(usr.registered_at.toString()) + btoa(Date.now().toString()));
@@ -293,7 +293,7 @@ router.post("/resetpassword", (req, res) => {
 			// Add new pending to reset the password
 			const newPending = new ResetPending({
 				key: link_key,
-				email: req.body.email
+				email: req.body.email.toLowerCase(),
 			});
 			newPending
 				.save()
@@ -366,7 +366,7 @@ router.post("/doresetpassword", (req, res) => {
 			}
 			else{
 				// Now, gonna reset the password.
-				User.findOne({email: pending.email}).then(usr => { // find a user related to this pending
+				User.findOne({email: {$regex: new RegExp(`^${pending.email}`, 'i')}}).then(usr => { // find a user related to this pending
 					if(usr){ // if existed
 						// preparing of new password
 						const new_password = generateRandomString();
@@ -460,7 +460,7 @@ router.post("/changepassword", (req, res) => {
 	}
 
 	// generate new password
-	User.findOne({email: req.body.email}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
 		if(user){
 			const key = base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
 			const password_link = config.FRONT_URL + '/change-password/' + key;
@@ -468,7 +468,7 @@ router.post("/changepassword", (req, res) => {
 			// Add new pending to reset the password
 			const newPending = new ResetPending({
 				key: key,
-				email: req.body.email,
+				email: req.body.email.toLowerCase(),
 			});
 			newPending
 				.save()
@@ -533,7 +533,7 @@ router.post("/dochangepassword", (req, res) => {
 				}
 				else{
 					// Now, gonna reset the password.
-					User.findOne({email: pending.email}).then(user => { // find a user related to this pending
+					User.findOne({email: {$regex: new RegExp(`^${pending.email}`, 'i')}}).then(user => { // find a user related to this pending
 						if(user){ // if existed
 							console.log(pending.email, user.fname, user.lname);
 							// preparing of new password
@@ -592,15 +592,15 @@ router.post("/verifyemail", (req, res) => {
 	}
 
 	// generate new password
-	User.findOne({email: req.body.email}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
 		if(user){
-			const key = "VE" + base64.encode(btoa(user.email) + btoa(user.registered_at.toString()));
+			const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
 			const verify_link = config.FRONT_URL + '/verify-email/' + key;
 
 			// Add new pending to reset the password
 			const newPending = new VerifyPending({
 				key: key,
-				email: req.body.email,
+				email: req.body.email.toLowerCase(),
 			});
 			newPending
 				.save()
@@ -659,7 +659,7 @@ router.post("/doverifyemail", (req, res) => {
 			}
 			else{
 				// Now, gonna reset the password.
-				User.findOne({email: pending.email}).then(user => { // find a user related to this pending
+				User.findOne({email: {$regex: new RegExp(`^${pending.email}`, 'i')}}).then(user => { // find a user related to this pending
 					if(user){ // if existed
 						user.email_verified = true;
 						user.email_verified_at = new Date(Date.now());
