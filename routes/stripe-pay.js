@@ -92,7 +92,7 @@ router.post("/verifycoupon", async (req, res) => {
 				return res.status(400).json({verified: false, message: err.toString()});
 			}
 			else{
-				return res.status(200).json({verified: coupon.valid, amount_off: coupon.amount_off, percent_off: coupon.percent_off});
+				return res.status(200).json({verified: coupon.valid, name: coupon.name, amount_off: coupon.amount_off, percent_off: coupon.percent_off});
 			}
 		});
 });
