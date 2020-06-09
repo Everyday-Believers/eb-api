@@ -23,7 +23,7 @@ module.exports = {
 	 * TODO: must be replaced for production
 	 * FindYourChurch Mailer
 	 */
-	MAIL_SG_API: process.env.SEND_GRID_API_KEY,
+	MAIL_SG_API: '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', // process.env.SEND_GRID_API_KEY,
 	MAIL_SENDER: process.env.MAIL_SENDER_ADDRESS,
 
 	/**
