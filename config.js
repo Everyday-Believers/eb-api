@@ -1,6 +1,6 @@
 module.exports = {
 	TRIAL_PERIOD: 1, // free trial period
-	PENDING_EXPIRATION: 300000, // in milliseconds
+	PENDING_EXPIRATION: 172800000, // 48 hours in milliseconds
 	VERIFY_EXPIRATION: 172800000, // 48 hours in milliseconds
 	PASSWORD_LENGTH: 20, // length of generated password
 
@@ -23,8 +23,7 @@ module.exports = {
 	 * TODO: must be replaced for production
 	 * FindYourChurch Mailer
 	 */
-	// MAIL_SG_API: process.env.SEND_GRID_API_KEY,
-	MAIL_SG_API: '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',
+	MAIL_SG_API: process.env.SEND_GRID_API_KEY,
 	MAIL_SENDER: process.env.MAIL_SENDER_ADDRESS,
 
 	/**
