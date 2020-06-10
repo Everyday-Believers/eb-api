@@ -24,7 +24,7 @@ module.exports = {
 	 * FindYourChurch Mailer
 	 */
 	// MAIL_SG_API: process.env.SEND_GRID_API_KEY,
-	MAIL_SG_API: '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',
+	MAIL_SG_API: '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',
 	MAIL_SENDER: process.env.MAIL_SENDER_ADDRESS,
 
 	/**
