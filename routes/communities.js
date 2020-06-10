@@ -127,7 +127,7 @@ function getNextMonth(current, delta){
 }
 
 router.post("/setcard", async (req, res) => {
-	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(async (user) => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(async (user) => {
 		if(user){
 			let is_error = false;
 			// if no billing in db, create it.
