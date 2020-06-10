@@ -470,7 +470,7 @@ router.post("/changepassword", (req, res) => {
 				key: key,
 				email: req.body.email.toLowerCase(),
 			});
-			newPending
+			return newPending
 				.save()
 				.then(() => {
 					// preparing the mail contents...
@@ -488,25 +488,24 @@ router.post("/changepassword", (req, res) => {
 						`
 					};
 
-					res.status(200).json({
-						msg_change: `Success! We just sent an email to ${req.body.email}.`
-					});
-
 					// send it!
-					fycmailer.sendMail(mailOptions, function(err, info){
+					return fycmailer.sendMail(mailOptions, function(err, info){
 						if(err){
-							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({msg_change: err});
+							return res.status(400).json({msg_change: err.toString()});
 						}
 						else{
-							console.log("sent a mail.");
+							return res.status(200).json({
+								msg_change: `Success! We just sent an email to ${req.body.email}.`
+							});
 						}
 					});
 				})
-				.catch(err => console.log(err));
+				.catch(err => {
+					return res.status(400).json({msg_change: err.toString()});
+				});
 		}
 		else{
-			return res.status(400).json({msg: "The email address is not exist"});
+			return res.status(400).json({msg_change: "The email address is not exist"});
 		}
 	});
 });
