@@ -18,6 +18,7 @@ const getDistLatlng = require("../utils/latlng-dist");
 // mailer
 const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
+const makeMailFromTemplate = require("../utils/mail-template");
 
 /**
  * Register a user
@@ -78,15 +79,15 @@ router.post("/register", (req, res) => {
 												const mailOptions = {
 													from: config.MAIL_SENDER,
 													to: req.body.email,
-													subject: 'Please verify email address',
-													html: `
-															<h2>Hi, ${user.fname}</h2>
-															<h4>Thank you for signing up.</h4>
-															To verify your account, click:
-															<p style="max-width: 100%;">
-																<a href="${verify_link}">${verify_link}</a>
-															</p>
-														`
+													subject: 'Welcome to everydaybelievers.com',
+													html: makeMailFromTemplate({
+														header: 'Welcome to everydaybelievers.com!',
+														title: 'Click the button below to confirm your email.',
+														content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+														link: verify_link,
+														button_text: 'Confirm email',
+														extra: '',
+													}),
 												};
 
 												// send it!
@@ -302,14 +303,15 @@ router.post("/resetpassword", (req, res) => {
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'Step 1: Please check this to reset your information',
-						html: `
-							<h2>Hi, ${user.fname}.</h2>
-							<h4>We received your request to reset the password. You can confirm it by clicking the following:</h4>
-							<p>
-								<a href="${user.link}">${user.link}</a>
-							</p>
-						`
+						subject: 'You requested to reset your password.',
+						html: makeMailFromTemplate({
+							header: 'You requested to reset your password.',
+							title: 'Click the link below to reset your password.',
+							content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+							link: user.link,
+							button_text: 'Create a new password',
+							extra: '',
+						}),
 					};
 
 					// send it!
@@ -394,19 +396,17 @@ router.post("/doresetpassword", (req, res) => {
 										const mailOptions = {
 											from: config.MAIL_SENDER,
 											to: to_email,
-											subject: 'Step 2: Your password was regenerated.',
-											html: `
-												<h2>Hi, ${usr.fname}.</h2>
-												<h4>Here is your new password in:</h4>
-												<p style="background-color: #888; padding: 10px 16px; color: #888;">
-													${new_password}
-												</p>
-												<p>
-													Please drag your mouse on the above grey bar to view your new password, 
-													and keep it in the secure places.
-												</p>
-												<p>Thank you.</p>
-											`
+											subject: 'Your password has successfully been updated',
+											html: makeMailFromTemplate({
+												header: 'Success!',
+												title: 'Your password has successfully been updated.',
+												content: 'If you believe you received this email in error, please delete it and/or contact our <a href="mailto:support@everydaybelievers.com">support team</a> if you wish to troubleshoot further.<p style="background-color: #888; padding: 10px 16px; color: #888;">\n' +
+													'${new_password}\n' +
+													'</p>',
+												link: config.FRONT_URL,
+												button_text: 'Go to my dashboard',
+												extra: '',
+											}),
 										};
 
 										// send it!
@@ -478,15 +478,15 @@ router.post("/changepassword", (req, res) => {
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'FindYourChurch: Forgot password?',
-						html: `
-							<h2>Hi, ${user.fname}</h2>
-							<h4>We received your request to change the password.
-							 You can continue it by clicking the following:</h4>
-							<p style="max-width: 100%;">
-								<a href="${password_link}">${password_link}</a>
-							</p>
-						`
+						subject: 'You requested to reset your password',
+						html: makeMailFromTemplate({
+							header: 'You requested to reset your password.',
+							title: 'Click the link below to reset your password.',
+							content: 'If you believe you received this email in error, please delete it and/or contact our <a href="mailto:support@everydaybelievers.com">support team</a> if you wish to troubleshoot further.',
+							link: password_link,
+							button_text: 'Create a new password',
+							extra: '',
+						}),
 					};
 
 					// send it!
