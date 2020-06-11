@@ -3,7 +3,7 @@
  * @param mail_content {{header, title, content, link, button_text, extra}}
  * @returns {string}
  */
-const makeMailContent = (mail_content) => {
+module.exports = (mail_content) => {
 	return `
 <style>
 @import url('https://fonts.googleapis.com/css?family=Poppins:400,600,700,800');
@@ -79,5 +79,3 @@ ${mail_content.extra}
 </body>
 	`;
 };
-
-exports = makeMailContent;
