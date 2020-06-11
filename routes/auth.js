@@ -610,14 +610,14 @@ router.post("/verifyemail", (req, res) => {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
 						subject: 'Please verify email address',
-						html: `
-							<h2>Hi, ${user.fname}</h2>
-							<h4>Thank you for verification</h4>
-							To continue, just click:
-							<p style="max-width: 100%;">
-								<a href="${verify_link}">${verify_link}</a>
-							</p>
-						`
+						html: makeMailFromTemplate({
+							header: 'Welcome to everydaybelievers.com!',
+							title: 'Click the button below to confirm your email.',
+							content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+							link: verify_link,
+							button_text: 'Confirm email',
+							extra: '',
+						}),
 					};
 
 					// send it!
