@@ -10,6 +10,7 @@ module.exports = (mail_content) => {
 
 .mail-container {
 margin: 0 auto;
+padding-top: 40px;
 width: 100%;
 max-width: 720px;
 text-align: center;
