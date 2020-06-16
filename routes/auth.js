@@ -129,9 +129,49 @@ router.post("/register", (req, res) => {
 						newUser
 							.save()
 							.then(user => {
-								res.status(200).json({
-									msg_register: "Your account has been created successfully."
+								// send a mail to verify
+								const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+								const verify_link = config.FRONT_URL + '/verify-email/' + key;
+
+								// Add new pending to verify email
+								const newPending = new VerifyPending({
+									key: key,
+									email: req.body.email.toLowerCase(),
 								});
+								newPending
+									.save()
+									.then(() => {
+										// preparing the mail contents...
+										const mailOptions = {
+											from: config.MAIL_SENDER,
+											to: req.body.email,
+											subject: 'Confirm your email address',
+											html: makeMailFromTemplate({
+												front_url: config.FRONT_URL,
+												header: 'Welcome!',
+												title: 'Click the button below to confirm your email.',
+												content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+												link: verify_link,
+												button_text: 'Confirm email',
+												extra: '',
+											}),
+										};
+
+										// send it!
+										fycmailer.sendMail(mailOptions, function(err, info){
+											if(err){
+												res.status(400).json({
+													msg_register: err.toString()
+												});
+											}
+											else{
+												res.status(200).json({
+													msg_register: "Your account has been created successfully."
+												});
+											}
+										});
+									})
+									.catch(err => console.log(err));
 							})
 							.catch(err => console.log(err));
 					});
