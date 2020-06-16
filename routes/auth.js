@@ -35,13 +35,13 @@ router.post("/register", (req, res) => {
 
 	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(user => {
 		if(user){
-			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
+			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
 		}
 		else{
 			if(req.body.is_organization){
 				User.findOne({organization_name: req.body.organization_name}).then(user => {
 					if(user){
-						return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
+						return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
 					}
 					else{
 						const newUser = new User({
@@ -206,7 +206,7 @@ router.post("/login", (req, res) => {
 						},
 						(err, token) => {
 							res.status(200).json({
-								msg_login: "welcome to FindYourChurch.org",
+								msg_login: "welcome to everydaybelievers.com",
 								token: "Bearer " + token,
 							});
 						}
@@ -715,9 +715,9 @@ router.post("/sharecommunity", (req, res) => {
 
 	const share_link = config.FRONT_URL + '/view-community/' + req.body.community_id;
 	const mailOptions = {
-		from: `FindYourChurch <${req.body.email}>`,
+		from: `everydaybelievers <${req.body.email}>`,
 		to: req.body.to_email,
-		subject: 'FindYourChurch: I suggest this community.',
+		subject: 'everydaybelievers: I suggest this community.',
 		html: `
 				<h2>Hi</h2>
 				<h4>This is a my favorite community.</h4>
@@ -769,7 +769,7 @@ router.post("/reportcommunity", (req, res) => {
 	const report_link = config.FRONT_URL + '/view-community/' + req.body.community_id;
 	const mailOptions = {
 		from: `#${req.body.id} <${req.body.email}>`,
-		to: 'support@findyourchurch.com',
+		to: 'support@everydaybelievers.com',
 		subject: 'COMMUNITY REPORTED',
 		html: `
 				<h2>${req.body.community_name}</h2>
@@ -865,7 +865,7 @@ const filter_length = {
 	kids_welcome: 2,
 	ambiance: 4,
 	event_type: 8,
-	support_type: 5,
+	support_type: 6,
 };
 const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
@@ -956,9 +956,10 @@ router.post("/search", (req, res) => {
 						continue;
 
 					let dat_filter = comm[filter2] === undefined ? '0'.repeat(filter_length[filter2]) : comm[filter2];
-					if(req.body.filter[filter2].length !== dat_filter.length){
+					const d_len = req.body.filter[filter2].length - dat_filter.length;
+					if(d_len > 0){
 						// console.log("old format", req.body.filter[filter2], dat_filter);
-						dat_filter = dat_filter + "0";
+						dat_filter = dat_filter + '0'.repeat(d_len);
 					}
 
 					const dat2_value = parseInt(dat_filter, 2);
