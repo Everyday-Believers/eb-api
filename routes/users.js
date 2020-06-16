@@ -158,7 +158,7 @@ router.post("/update", (req, res) => {
 					return res.status(400).json({msg_email: "Not modified!"});
 				}
 				else{
-					User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(usr => {
+					User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(usr => {
 						if(usr){
 							return res.status(400).json({msg_email: "The email was already registered."});
 						}

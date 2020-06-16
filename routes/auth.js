@@ -18,6 +18,7 @@ const getDistLatlng = require("../utils/latlng-dist");
 // mailer
 const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
+const makeMailFromTemplate = require("../utils/mail-template");
 
 /**
  * Register a user
@@ -32,15 +33,15 @@ router.post("/register", (req, res) => {
 		return res.status(400).json(msg);
 	}
 
-	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(user => {
 		if(user){
-			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
+			return res.status(400).json({msg_reg_email: "This email address has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
 		}
 		else{
 			if(req.body.is_organization){
 				User.findOne({organization_name: req.body.organization_name}).then(user => {
 					if(user){
-						return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@findyourchurch.org."});
+						return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
 					}
 					else{
 						const newUser = new User({
@@ -78,15 +79,16 @@ router.post("/register", (req, res) => {
 												const mailOptions = {
 													from: config.MAIL_SENDER,
 													to: req.body.email,
-													subject: 'Please verify email address',
-													html: `
-															<h2>Hi, ${user.fname}</h2>
-															<h4>Thank you for signing up.</h4>
-															To verify your account, click:
-															<p style="max-width: 100%;">
-																<a href="${verify_link}">${verify_link}</a>
-															</p>
-														`
+													subject: 'Confirm your email address',
+													html: makeMailFromTemplate({
+														front_url: config.FRONT_URL,
+														header: 'Welcome!',
+														title: 'Click the button below to confirm your email.',
+														content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+														link: verify_link,
+														button_text: 'Confirm email',
+														extra: '',
+													}),
 												};
 
 												// send it!
@@ -142,7 +144,7 @@ router.post("/register", (req, res) => {
  * api - google user register
  */
 router.post("/googleregister", (req, res) => {
-	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(user => {
 		if(user){
 			return res.status(400).json({email: "Email already exists"});
 		}
@@ -176,7 +178,7 @@ router.post("/login", (req, res) => {
 	const password = req.body.password;
 
 	// Find user by email
-	User.findOne({email: {$regex: new RegExp(`^${email}`, 'i')}}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${email}$`, 'i')}}).then(user => {
 		// Check if user exists
 		if(!user){
 			return res.status(400).json({msg_login_email: "Email not found"});
@@ -204,7 +206,7 @@ router.post("/login", (req, res) => {
 						},
 						(err, token) => {
 							res.status(200).json({
-								msg_login: "welcome to FindYourChurch.org",
+								msg_login: "welcome to everydaybelievers.com",
 								token: "Bearer " + token,
 							});
 						}
@@ -225,7 +227,7 @@ router.post("/login", (req, res) => {
 router.post("/userinfo", (req, res) => {
 	User.findOne({_id: req.body.user_id}, '-password -google_id -facebook_id -tickets -ticket_expiry').then(user => {
 		if(user){
-			VerifyPending.findOne({email: {$regex: new RegExp(`^${user.email}`, 'i')}}, '-email -key').sort({pended_at: 'desc'}).then(pending => {
+			VerifyPending.findOne({email: {$regex: new RegExp(`^${user.email}$`, 'i')}}, '-email -key').sort({pended_at: 'desc'}).then(pending => {
 				if(pending){
 					return res.status(200).json({
 						...user._doc,
@@ -284,7 +286,7 @@ router.post("/resetpassword", (req, res) => {
 	let user = {
 		link: config.FRONT_URL + '/reset-password/',
 	};
-	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(usr => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(usr => {
 		if(usr){
 			user.fname = usr.fname;
 			const link_key = base64.encode(btoa(usr.email) + btoa(usr.registered_at.toString()) + btoa(Date.now().toString()));
@@ -302,14 +304,16 @@ router.post("/resetpassword", (req, res) => {
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'Step 1: Please check this to reset your information',
-						html: `
-							<h2>Hi, ${user.fname}.</h2>
-							<h4>We received your request to reset the password. You can confirm it by clicking the following:</h4>
-							<p>
-								<a href="${user.link}">${user.link}</a>
-							</p>
-						`
+						subject: 'You requested to reset your password.',
+						html: makeMailFromTemplate({
+							front_url: config.FRONT_URL,
+							header: 'You requested to reset your password.',
+							title: 'Click the link below to reset your password.',
+							content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+							link: user.link,
+							button_text: 'Create a new password',
+							extra: '',
+						}),
 					};
 
 					// send it!
@@ -366,7 +370,7 @@ router.post("/doresetpassword", (req, res) => {
 			}
 			else{
 				// Now, gonna reset the password.
-				User.findOne({email: {$regex: new RegExp(`^${pending.email}`, 'i')}}).then(usr => { // find a user related to this pending
+				User.findOne({email: {$regex: new RegExp(`^${pending.email}$`, 'i')}}).then(usr => { // find a user related to this pending
 					if(usr){ // if existed
 						// preparing of new password
 						const new_password = generateRandomString();
@@ -394,19 +398,18 @@ router.post("/doresetpassword", (req, res) => {
 										const mailOptions = {
 											from: config.MAIL_SENDER,
 											to: to_email,
-											subject: 'Step 2: Your password was regenerated.',
-											html: `
-												<h2>Hi, ${usr.fname}.</h2>
-												<h4>Here is your new password in:</h4>
-												<p style="background-color: #888; padding: 10px 16px; color: #888;">
-													${new_password}
-												</p>
-												<p>
-													Please drag your mouse on the above grey bar to view your new password, 
-													and keep it in the secure places.
-												</p>
-												<p>Thank you.</p>
-											`
+											subject: 'Your password has successfully been updated',
+											html: makeMailFromTemplate({
+												front_url: config.FRONT_URL,
+												header: 'Success!',
+												title: 'Your password has successfully been updated.',
+												content: 'If you believe you received this email in error, please delete it and/or contact our <a href="mailto:support@everydaybelievers.com">support team</a> if you wish to troubleshoot further.<p style="background-color: #888; padding: 10px 16px; color: #888;">\n' +
+													'${new_password}\n' +
+													'</p>',
+												link: config.FRONT_URL,
+												button_text: 'Go to my dashboard',
+												extra: '',
+											}),
 										};
 
 										// send it!
@@ -460,53 +463,54 @@ router.post("/changepassword", (req, res) => {
 	}
 
 	// generate new password
-	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(async user => {
 		if(user){
 			const key = base64.encode(btoa(Date.now().toString()) + btoa(user.email) + btoa(user.registered_at.toString()));
 			const password_link = config.FRONT_URL + '/change-password/' + key;
 
+			await ResetPending.deleteMany({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}});
 			// Add new pending to reset the password
 			const newPending = new ResetPending({
 				key: key,
 				email: req.body.email.toLowerCase(),
 			});
-			newPending
+			return newPending
 				.save()
 				.then(() => {
 					// preparing the mail contents...
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'FindYourChurch: Forgot password?',
-						html: `
-							<h2>Hi, ${user.fname}</h2>
-							<h4>We received your request to change the password.
-							 You can continue it by clicking the following:</h4>
-							<p style="max-width: 100%;">
-								<a href="${password_link}">${password_link}</a>
-							</p>
-						`
+						subject: 'You requested to reset your password',
+						html: makeMailFromTemplate({
+							front_url: config.FRONT_URL,
+							header: 'You requested to reset your password.',
+							title: 'Click the link below to reset your password.',
+							content: "If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.",
+							link: password_link,
+							button_text: 'Create a new password',
+							extra: '',
+						}),
 					};
 
-					res.status(200).json({
-						msg_change: `Success! We just sent an email to ${req.body.email}.`
-					});
-
 					// send it!
-					fycmailer.sendMail(mailOptions, function(err, info){
+					return fycmailer.sendMail(mailOptions, function(err, info){
 						if(err){
-							console.log(`send mail failed: ${err}`);
-							return res.status(400).json({msg_change: err});
+							return res.status(400).json({msg_change: err.toString()});
 						}
 						else{
-							console.log("sent a mail.");
+							return res.status(200).json({
+								msg_change: `Success! We just sent an email to ${req.body.email}.`
+							});
 						}
 					});
 				})
-				.catch(err => console.log(err));
+				.catch(err => {
+					return res.status(400).json({msg_change: err.toString()});
+				});
 		}
 		else{
-			return res.status(400).json({msg: "The email address is not exist"});
+			return res.status(400).json({msg_change: "The email address is not exist"});
 		}
 	});
 });
@@ -533,7 +537,7 @@ router.post("/dochangepassword", (req, res) => {
 				}
 				else{
 					// Now, gonna reset the password.
-					User.findOne({email: {$regex: new RegExp(`^${pending.email}`, 'i')}}).then(user => { // find a user related to this pending
+					User.findOne({email: {$regex: new RegExp(`^${pending.email}$`, 'i')}}).then(user => { // find a user related to this pending
 						if(user){ // if existed
 							console.log(pending.email, user.fname, user.lname);
 							// preparing of new password
@@ -592,7 +596,7 @@ router.post("/verifyemail", (req, res) => {
 	}
 
 	// generate new password
-	User.findOne({email: {$regex: new RegExp(`^${req.body.email}`, 'i')}}).then(user => {
+	User.findOne({email: {$regex: new RegExp(`^${req.body.email}$`, 'i')}}).then(user => {
 		if(user){
 			const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
 			const verify_link = config.FRONT_URL + '/verify-email/' + key;
@@ -609,15 +613,16 @@ router.post("/verifyemail", (req, res) => {
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'Please verify email address',
-						html: `
-							<h2>Hi, ${user.fname}</h2>
-							<h4>Thank you for verification</h4>
-							To continue, just click:
-							<p style="max-width: 100%;">
-								<a href="${verify_link}">${verify_link}</a>
-							</p>
-						`
+						subject: 'Confirm your email address',
+						html: makeMailFromTemplate({
+							front_url: config.FRONT_URL,
+							header: 'Welcome!',
+							title: 'Click the button below to confirm your email.',
+							content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+							link: verify_link,
+							button_text: 'Confirm email',
+							extra: '',
+						}),
 					};
 
 					// send it!
@@ -659,7 +664,7 @@ router.post("/doverifyemail", (req, res) => {
 			}
 			else{
 				// Now, gonna reset the password.
-				User.findOne({email: {$regex: new RegExp(`^${pending.email}`, 'i')}}).then(user => { // find a user related to this pending
+				User.findOne({email: {$regex: new RegExp(`^${pending.email}$`, 'i')}}).then(user => { // find a user related to this pending
 					if(user){ // if existed
 						user.email_verified = true;
 						user.email_verified_at = new Date(Date.now());
@@ -710,9 +715,9 @@ router.post("/sharecommunity", (req, res) => {
 
 	const share_link = config.FRONT_URL + '/view-community/' + req.body.community_id;
 	const mailOptions = {
-		from: `FindYourChurch <${req.body.email}>`,
+		from: `everydaybelievers <${req.body.email}>`,
 		to: req.body.to_email,
-		subject: 'FindYourChurch: I suggest this community.',
+		subject: 'everydaybelievers: I suggest this community.',
 		html: `
 				<h2>Hi</h2>
 				<h4>This is a my favorite community.</h4>
@@ -764,7 +769,7 @@ router.post("/reportcommunity", (req, res) => {
 	const report_link = config.FRONT_URL + '/view-community/' + req.body.community_id;
 	const mailOptions = {
 		from: `#${req.body.id} <${req.body.email}>`,
-		to: 'support@findyourchurch.com',
+		to: 'support@everydaybelievers.com',
 		subject: 'COMMUNITY REPORTED',
 		html: `
 				<h2>${req.body.community_name}</h2>
@@ -860,7 +865,7 @@ const filter_length = {
 	kids_welcome: 2,
 	ambiance: 4,
 	event_type: 8,
-	support_type: 5,
+	support_type: 6,
 };
 const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
@@ -951,9 +956,10 @@ router.post("/search", (req, res) => {
 						continue;
 
 					let dat_filter = comm[filter2] === undefined ? '0'.repeat(filter_length[filter2]) : comm[filter2];
-					if(req.body.filter[filter2].length !== dat_filter.length){
+					const d_len = req.body.filter[filter2].length - dat_filter.length;
+					if(d_len > 0){
 						// console.log("old format", req.body.filter[filter2], dat_filter);
-						dat_filter = dat_filter + "0";
+						dat_filter = dat_filter + '0'.repeat(d_len);
 					}
 
 					const dat2_value = parseInt(dat_filter, 2);
