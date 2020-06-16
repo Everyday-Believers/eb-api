@@ -21,7 +21,7 @@ module.exports = {
 
 	/**
 	 * TODO: must be replaced for production
-	 * FindYourChurch Mailer
+	 * everydaybelievers Mailer
 	 */
 	MAIL_SG_API: process.env.SEND_GRID_API_KEY,
 	MAIL_SENDER: process.env.MAIL_SENDER_ADDRESS,
