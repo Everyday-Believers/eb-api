@@ -1,6 +1,6 @@
 /**
  *
- * @param mail_content {{header, title, content, link, button_text, extra}}
+ * @param mail_content {{front_url, header, title, content, link, button_text, extra}}
  * @returns {string}
  */
 module.exports = (mail_content) => {
@@ -10,7 +10,6 @@ module.exports = (mail_content) => {
 
 .mail-container {
 margin: 0 auto;
-padding-top: 100px;
 width: 100%;
 max-width: 720px;
 text-align: center;
@@ -64,7 +63,7 @@ background-image: linear-gradient(180deg, rgba(243, 242, 245, 0.2), rgba(243, 24
 <body style="font-family: Poppins, sans-serif; background-color: #e8e5ea;">
 <div class="mail-container">
 <div style="padding-bottom: 40px;">
-<img src="https://develop.findyourchurch.org/img/logo.png" alt="site logo" style="width: 360px;"/>
+<img src="${mail_content.front_url}/img/logo.png" alt="site logo" style="width: 360px;"/>
 </div>
 <div>
 <div class="mail-header">${mail_content.header}</div>
