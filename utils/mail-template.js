@@ -10,9 +10,9 @@ module.exports = (mail_content) => {
 
 .mail-container {
 margin: 0 auto;
-padding-top: 40px;
+padding: 40px 20px;
 width: 100%;
-max-width: 720px;
+max-width: 760px;
 text-align: center;
 }
 
@@ -64,7 +64,7 @@ background-image: linear-gradient(180deg, rgba(243, 242, 245, 0.2), rgba(243, 24
 <body style="font-family: Poppins, sans-serif; background-color: #e8e5ea;">
 <div class="mail-container">
 <div style="padding-bottom: 40px;">
-<img src="${mail_content.front_url}/img/logo.png" alt="site logo" style="width: 360px;"/>
+<img src="${mail_content.front_url}/img/logo.png" alt="site logo" style="width: 60%;"/>
 </div>
 <div>
 <div class="mail-header">${mail_content.header}</div>

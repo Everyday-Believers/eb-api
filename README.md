@@ -15,7 +15,7 @@ Please consider the following section before launching the server.
 ### `MONGO_URL`
 ex)
 ```
-http://127.0.0.1:27017/findyourchurch
+http://127.0.0.1:27017/everydaybelievers
 ```
 
 ### `FONT_URL`
