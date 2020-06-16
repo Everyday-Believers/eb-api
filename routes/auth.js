@@ -94,17 +94,18 @@ router.post("/register", (req, res) => {
 												// send it!
 												fycmailer.sendMail(mailOptions, function(err, info){
 													if(err){
+														res.status(400).json({
+															msg_register: err.toString()
+														});
 													}
 													else{
-														console.log("Sent a mail to verify the user email.")
+														res.status(200).json({
+															msg_register: "Your organization account has been created successfully."
+														});
 													}
 												});
 											})
 											.catch(err => console.log(err));
-
-										res.status(200).json({
-											msg_register: "Your organization account has been created successfully."
-										});
 									})
 									.catch(err => console.log(err));
 							});
