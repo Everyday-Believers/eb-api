@@ -486,7 +486,7 @@ router.post("/changepassword", (req, res) => {
 							front_url: config.FRONT_URL,
 							header: 'You requested to reset your password.',
 							title: 'Click the link below to reset your password.',
-							content: "If you believe you received this email in error, please delete it and/or contact our <a href='mailto:support@everydaybelievers.com'>support team</a> if you wish to troubleshoot further.",
+							content: "If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.",
 							link: password_link,
 							button_text: 'Create a new password',
 							extra: '',
