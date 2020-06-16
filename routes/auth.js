@@ -79,9 +79,10 @@ router.post("/register", (req, res) => {
 												const mailOptions = {
 													from: config.MAIL_SENDER,
 													to: req.body.email,
-													subject: 'Welcome to everydaybelievers.com',
+													subject: 'Confirm your email address',
 													html: makeMailFromTemplate({
-														header: 'Welcome to everydaybelievers.com!',
+														front_url: config.FRONT_URL,
+														header: 'Welcome!',
 														title: 'Click the button below to confirm your email.',
 														content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
 														link: verify_link,
@@ -305,6 +306,7 @@ router.post("/resetpassword", (req, res) => {
 						to: req.body.email,
 						subject: 'You requested to reset your password.',
 						html: makeMailFromTemplate({
+							front_url: config.FRONT_URL,
 							header: 'You requested to reset your password.',
 							title: 'Click the link below to reset your password.',
 							content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
@@ -398,6 +400,7 @@ router.post("/doresetpassword", (req, res) => {
 											to: to_email,
 											subject: 'Your password has successfully been updated',
 											html: makeMailFromTemplate({
+												front_url: config.FRONT_URL,
 												header: 'Success!',
 												title: 'Your password has successfully been updated.',
 												content: 'If you believe you received this email in error, please delete it and/or contact our <a href="mailto:support@everydaybelievers.com">support team</a> if you wish to troubleshoot further.<p style="background-color: #888; padding: 10px 16px; color: #888;">\n' +
@@ -480,6 +483,7 @@ router.post("/changepassword", (req, res) => {
 						to: req.body.email,
 						subject: 'You requested to reset your password',
 						html: makeMailFromTemplate({
+							front_url: config.FRONT_URL,
 							header: 'You requested to reset your password.',
 							title: 'Click the link below to reset your password.',
 							content: 'If you believe you received this email in error, please delete it and/or contact our <a href="mailto:support@everydaybelievers.com">support team</a> if you wish to troubleshoot further.',
@@ -609,9 +613,10 @@ router.post("/verifyemail", (req, res) => {
 					const mailOptions = {
 						from: config.MAIL_SENDER,
 						to: req.body.email,
-						subject: 'Please verify email address',
+						subject: 'Confirm your email address',
 						html: makeMailFromTemplate({
-							header: 'Welcome to everydaybelievers.com!',
+							front_url: config.FRONT_URL,
+							header: 'Welcome!',
 							title: 'Click the button below to confirm your email.',
 							content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
 							link: verify_link,
