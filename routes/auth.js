@@ -939,16 +939,30 @@ router.post("/search", (req, res) => {
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
-	const base_criteria = req.body.filter.owner_id === undefined || req.body.filter.owner_id === '' ? {
+	let base_criteria = req.body.filter.owner_id === undefined || req.body.filter.owner_id === '' ? {
 		activated: true,
 	} : {
 		activated: true,
 		owner_id: req.body.filter.owner_id,
 	};
 
-	console.log('base criteria:', base_criteria);
+	if(req.body.owner !== null && req.body.owner !== undefined){
+		base_criteria = {
+			...base_criteria,
+			owner_id: req.body.owner,
+		};
+	}
 
-	Community.find(base_criteria).then(comms => {
+	if(!isEmpty(req.body.category)){
+		base_criteria = {
+			...base_criteria,
+			category: req.body.category,
+		};
+	}
+
+	// console.log('base criteria:', base_criteria);
+
+	Community.find(base_criteria, null, {sort: {_id: 'asc'}}).then(comms => {
 		for(let comm of comms){
 			if(isEmpty(comm.coordinate))
 				continue;
@@ -957,10 +971,10 @@ router.post("/search", (req, res) => {
 			const lng = comm.coordinate ? comm.coordinate.lng : 0;
 			const dist = Math.round(getDistLatlng(req.body.lat, req.body.lng, lat, lng));
 
-			if(req.body.owner !== null && req.body.owner !== undefined){
-				if(req.body.owner !== comm.owner_id)
-					continue;
-			}
+			// if(req.body.owner !== null && req.body.owner !== undefined){
+			// 	if(req.body.owner !== comm.owner_id)
+			// 		continue;
+			// }
 
 			if(dist > (req.body.radius === null ? 5000 : req.body.radius))
 				continue;
@@ -970,8 +984,8 @@ router.post("/search", (req, res) => {
 				categories.push(comm.category);
 			}
 
-			if(!isEmpty(req.body.category) && comm.category !== req.body.category)
-				continue;
+			// if(!isEmpty(req.body.category) && comm.category !== req.body.category)
+			// 	continue;
 
 			// filtering
 			let is_passed = true;
@@ -1030,7 +1044,7 @@ router.post("/search", (req, res) => {
 			}
 		}
 
-		console.log(results.length);
+		// console.log(results.length);
 
 		return res.status(200).json({results: results, counts: counts, categories: categories});
 	});
