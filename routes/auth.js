@@ -966,7 +966,7 @@ router.post("/search", async (req, res) => {
 	let picked = 0;
 	let has_more = false;
 	do{
-		const comms = await Community.find(base_criteria, null, {sort: {_id: 'asc'}, skip: req.body.skip, limit: 20});
+		const comms = await Community.find(base_criteria, '-pictures', {sort: {_id: 'asc'}, skip: req.body.skip, limit: 20});
 
 		if(comms.length === 0){
 			break;
@@ -1078,6 +1078,13 @@ router.post("/viewCommunity", (req, res) => {
 	console.log(req.body);
 	Community.findOne({_id: req.body.id}).then(comm => {
 		return res.status(200).json(comm);
+	});
+});
+
+router.post("/get-thumbnail", (req, res) => {
+	Community.findOne({_id: req.body.id}, 'pictures').then(comm => {
+		console.log(comm);
+		return res.status(200).json(comm.pictures ? comm.pictures[0] : null);
 	});
 });
 
