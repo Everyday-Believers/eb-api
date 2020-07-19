@@ -1075,7 +1075,6 @@ router.post("/search", async (req, res) => {
 });
 
 router.post("/viewCommunity", (req, res) => {
-	console.log(req.body);
 	Community.findOne({_id: req.body.id}).then(comm => {
 		return res.status(200).json(comm);
 	});
@@ -1083,7 +1082,6 @@ router.post("/viewCommunity", (req, res) => {
 
 router.post("/get-thumbnail", (req, res) => {
 	Community.findOne({_id: req.body.id}, 'pictures').then(comm => {
-		console.log(comm);
 		return res.status(200).json(comm.pictures ? comm.pictures[0] : null);
 	});
 });
