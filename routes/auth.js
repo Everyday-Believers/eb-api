@@ -910,7 +910,7 @@ const filter_length = {
 };
 const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
-router.post("/search", async (req, res) => {
+router.post("/search", (req, res) => {
 	console.log('search criteria:', req.body);
 
 	let results = [];
@@ -960,23 +960,10 @@ router.post("/search", async (req, res) => {
 		};
 	}
 
-	console.log('base criteria:', base_criteria);
+	// console.log('base criteria:', base_criteria);
 
-	let skipped = req.body.skip;
-	let picked = 0;
-	let has_more = false;
-	do{
-		const comms = await Community.find(base_criteria, '-pictures', {sort: {_id: 'asc'}, skip: req.body.skip, limit: 20});
-
-		if(comms.length === 0){
-			break;
-		}
-		if(comms.length === 20){
-			has_more = true;
-		}
-
+	Community.find(base_criteria, null, {sort: {_id: 'asc'}}).then(comms => {
 		for(let comm of comms){
-			skipped++;
 			if(isEmpty(comm.coordinate))
 				continue;
 
@@ -1054,35 +1041,19 @@ router.post("/search", async (req, res) => {
 
 			if(is_passed){
 				results.push({dist: dist, data: comm});
-				picked++;
-				if(picked === 20){
-					has_more = true;
-					break;
-				}
 			}
 		}
-	}while(picked < 20 && has_more);
 
-	console.log("Skipped:", skipped, "Searched:", results.length);
+		// console.log(results.length);
 
-	return res.status(200).json({
-		results: results,
-		counts: counts,
-		categories: categories,
-		skipped: skipped,
-		continued: req.body.skip > 0,
+		return res.status(200).json({results: results, counts: counts, categories: categories});
 	});
 });
 
 router.post("/viewCommunity", (req, res) => {
+	console.log(req.body);
 	Community.findOne({_id: req.body.id}).then(comm => {
 		return res.status(200).json(comm);
-	});
-});
-
-router.post("/get-thumbnail", (req, res) => {
-	Community.findOne({_id: req.body.id}, 'pictures').then(comm => {
-		return res.status(200).json(comm.pictures ? comm.pictures[0] : null);
 	});
 });
 
