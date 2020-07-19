@@ -960,10 +960,13 @@ router.post("/search", (req, res) => {
 		};
 	}
 
-	// console.log('base criteria:', base_criteria);
+	console.log('base criteria:', base_criteria);
 
-	Community.find(base_criteria, null, {sort: {_id: 'asc'}}).then(comms => {
+	Community.find(base_criteria, null, {sort: {_id: 'asc'}, skip: req.body.skip}).then(comms => {
+		let skipped = req.body.skip;
+		let ended = true;
 		for(let comm of comms){
+			skipped++;
 			if(isEmpty(comm.coordinate))
 				continue;
 
@@ -1041,12 +1044,16 @@ router.post("/search", (req, res) => {
 
 			if(is_passed){
 				results.push({dist: dist, data: comm});
+				if(results.length === 20){
+					ended = false;
+					break;
+				}
 			}
 		}
 
-		// console.log(results.length);
+		console.log("Skipped:", skipped, "Searched:", results.length);
 
-		return res.status(200).json({results: results, counts: counts, categories: categories});
+		return res.status(200).json({results: results, counts: counts, categories: categories, skipped: skipped, continued: req.body.skip > 0, ended: ended});
 	});
 });
 
