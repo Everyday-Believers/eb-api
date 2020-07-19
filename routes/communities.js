@@ -1,10 +1,31 @@
 const express = require("express");
 const router = express.Router();
+const fs = require("fs");
 const isEmpty = require("is-empty");
 const config = require("../config");
 const stripe = require('stripe')(config.STRIPE_SK);
 const Community = require("../models/Community");
 const User = require("../models/User");
+
+savePictures = (id, pictures) => {
+	let i = 0;
+	for(const pic of pictures){
+		const meta_data = pic.split(";base64,");
+		const ext = meta_data[0].split("/")[1];
+		fs.writeFile(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64', err => {
+			console.log(err);
+		});
+		i++;
+	}
+};
+
+getPictureNames = (info) => {
+	let names = [];
+	for(const pic of info.pictures){
+		names.push(pic.split(";base64,")[0].split("/")[1]);
+	}
+	return names;
+};
 
 /**
  * create new community
@@ -36,19 +57,23 @@ router.post("/create", (req, res) => {
 		});
 	}
 	else{
-		console.log(req.body.community_id);
 		// check existence for voiding of duplication.
 		Community.findOne({
 			_id: req.body.community_id === -1 ? null : req.body.community_id,
 		}).then(community => {
 			if(community){ // if it already exists and new, cannot create it.
 				if(req.body.is_new){ // cannot create
-					console.log("?");
 					return res.status(400).json({msg_community: "The community already exists."});
 				}
 				else{ // edit it.
-					community.updateOne(community_info)
-						.then(() => {
+					community.updateOne({
+						...community_info,
+						pictures: getPictureNames(community_info),
+					})
+						.then(comm => {
+							console.log("edited: ", community._id);
+							// save community_info.pictures to disk as image files
+							savePictures(community._id, community_info.pictures);
 							return res.status(200).json({msg_community: "The community was saved."});
 						})
 						.catch(err => console.log(err));
@@ -58,10 +83,14 @@ router.post("/create", (req, res) => {
 			else{ // we can create it.
 				const newCommunity = new Community({
 					...community_info,
+					pictures: getPictureNames(community_info),
 				});
 				newCommunity
 					.save()
-					.then(() => {
+					.then(comm => {
+						console.log("a new created", comm._id);
+						// save community_info.pictures to disk as image files
+						savePictures(comm._id, community_info.pictures);
 						return res.status(200).json({msg_community: "The community was created."});
 					})
 					.catch(err => console.log(err));

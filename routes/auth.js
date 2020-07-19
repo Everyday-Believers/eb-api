@@ -1057,4 +1057,47 @@ router.post("/viewCommunity", (req, res) => {
 	});
 });
 
+savePictures = (id, pictures) => {
+	let i = 0;
+	for(const pic of pictures){
+		const meta_data = pic.split(";base64,");
+		const ext = meta_data[0].split("/")[1];
+		fs.writeFile(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64', err => {
+			console.log(err);
+		});
+		i++;
+	}
+};
+
+getPictureNames = (info) => {
+	let names = [];
+	for(const pic of info.pictures){
+		names.push(pic.split(";base64,")[0].split("/")[1]);
+	}
+	return names;
+};
+
+router.all("/migrate-pictures", (req, res) => {
+	Community.find()
+		.then(comms => {
+			comms.forEach((comm, index) => {
+				if(comm.pictures.length > 0 && comm.pictures[0].length > 300){
+					console.log(index, comm._id, comm.pictures.length, `image${comm.pictures.length > 1 ? "s" : ""}`);
+					// save images
+					savePictures(comm._id, comm.pictures);
+
+					// update community info
+					Community.updateOne({_id: comm._id}, {pictures: getPictureNames(comm)}, null, err => {
+						if(err)
+							console.log(err.toString());
+					});
+				}
+			})
+			return res.status(200).json({message: "success"});
+		})
+		.catch(err => {
+			return res.status(500).json({message: err.toString()});
+		})
+});
+
 module.exports = router;
