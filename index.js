@@ -43,5 +43,8 @@ app.use("/api/communities", passport.authenticate('jwt', {session: false}), comm
 app.use("/api/stripe", passport.authenticate('jwt', {session: false}), stripepay);
 app.use("/api/test", testroute);
 
+// static materials
+app.use('/static', express.static('public'));
+
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server up and running on port ${port}!`));
