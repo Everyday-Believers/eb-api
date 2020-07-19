@@ -962,7 +962,7 @@ router.post("/search", (req, res) => {
 
 	// console.log('base criteria:', base_criteria);
 
-	Community.find(base_criteria, null, {sort: {_id: 'asc'}}).then(comms => {
+	Community.find(base_criteria).then(comms => {
 		for(let comm of comms){
 			if(isEmpty(comm.coordinate))
 				continue;
