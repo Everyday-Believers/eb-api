@@ -404,7 +404,7 @@ router.post("/activate", async (req, res) => {
 									// create invoice item for reminder
 									const invo_item = await stripe.invoiceItems.create({
 										customer: user.billing_info.id,
-										amount: amount, // 5$ for 15 days.
+										amount: Math.round(amount), // 5$ for 15 days.
 										currency: 'usd',
 										description: "Community Subscription(s) (per profile)", // `One-off invoice for reminder. qty: ${real_qty}`,
 									});
@@ -459,7 +459,7 @@ router.post("/activate", async (req, res) => {
 
 						subscription = await stripe.subscriptions.create({
 							customer: user.billing_info.id,
-							trial_period_days: plan.trial_period_days || config.TRIAL_PERIOD,
+							trial_period_days: plan.trial_period_days ? plan.trial_period_days : 0,
 							coupon: req.body.coupon,
 							items: [{
 								plan: config.SUBSCRIBER_MONTHLY_PLAN,
@@ -713,7 +713,7 @@ router.post("/activatemulti", async (req, res) => {
 									// create invoice item for reminder
 									const invo_item = await stripe.invoiceItems.create({
 										customer: user.billing_info.id,
-										amount: amount, // 5$ for 15 days.
+										amount: Math.round(amount), // 5$ for 15 days.
 										currency: 'usd',
 										description: `Community Subscription(s) (per profile)`, // ${real_qty}
 									});
@@ -769,7 +769,7 @@ router.post("/activatemulti", async (req, res) => {
 
 						subscription = await stripe.subscriptions.create({
 							customer: user.billing_info.id,
-							trial_period_days: plan.trial_period_days,
+							trial_period_days: plan.trial_period_days ? plan.trial_period_days : 0,
 							coupon: req.body.coupon,
 							items: [{
 								plan: config.SUBSCRIBER_MONTHLY_PLAN,
@@ -832,7 +832,10 @@ router.post("/activatemulti", async (req, res) => {
 								}
 							});
 					}
-				});
+				})
+					.catch(err => {
+						console.log(err);
+					});
 			}
 		}
 		else{
