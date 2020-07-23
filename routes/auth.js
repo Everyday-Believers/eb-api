@@ -39,79 +39,79 @@ router.post("/register", (req, res) => {
 		}
 		else{
 			if(req.body.is_organization){
-				User.findOne({organization_name: req.body.organization_name}).then(user => {
-					if(user){
-						return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
-					}
-					else{
-						const newUser = new User({
-							fname: req.body.fname,
-							lname: req.body.lname,
-							email: req.body.email.toLowerCase(),
-							admin_email: req.body.email,
-							password: req.body.password,
-							is_organization: req.body.is_organization,
-							organization_name: req.body.organization_name,
-							zip_code: req.body.zip_code,
-							location: req.body.location,
-						});
-						// Hash password before saving in database
-						bcrypt.genSalt(10, (err, salt) => {
-							bcrypt.hash(newUser.password, salt, (err, hash) => {
-								if(err) throw err;
-								newUser.password = hash;
-								newUser
+				// User.findOne({organization_name: req.body.organization_name}).then(user => {
+				// if(user){
+				// 	return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
+				// }
+				// else{
+				const newUser = new User({
+					fname: req.body.fname,
+					lname: req.body.lname,
+					email: req.body.email.toLowerCase(),
+					admin_email: req.body.email,
+					password: req.body.password,
+					is_organization: req.body.is_organization,
+					organization_name: req.body.organization_name,
+					zip_code: req.body.zip_code,
+					location: req.body.location,
+				});
+				// Hash password before saving in database
+				bcrypt.genSalt(10, (err, salt) => {
+					bcrypt.hash(newUser.password, salt, (err, hash) => {
+						if(err) throw err;
+						newUser.password = hash;
+						newUser
+							.save()
+							.then(user => {
+								// send a mail to verify
+								const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+								const verify_link = config.FRONT_URL + '/verify-email/' + key;
+
+								// Add new pending to verify email
+								const newPending = new VerifyPending({
+									key: key,
+									email: req.body.email.toLowerCase(),
+								});
+								newPending
 									.save()
-									.then(user => {
-										// send a mail to verify
-										const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
-										const verify_link = config.FRONT_URL + '/verify-email/' + key;
+									.then(() => {
+										// preparing the mail contents...
+										const mailOptions = {
+											from: config.MAIL_SENDER,
+											to: req.body.email,
+											subject: 'Confirm your email address',
+											html: makeMailFromTemplate({
+												front_url: config.FRONT_URL,
+												header: 'Welcome!',
+												title: 'Click the button below to confirm your email.',
+												content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+												link: verify_link,
+												button_text: 'Confirm email',
+												extra: '',
+											}),
+										};
 
-										// Add new pending to verify email
-										const newPending = new VerifyPending({
-											key: key,
-											email: req.body.email.toLowerCase(),
-										});
-										newPending
-											.save()
-											.then(() => {
-												// preparing the mail contents...
-												const mailOptions = {
-													from: config.MAIL_SENDER,
-													to: req.body.email,
-													subject: 'Confirm your email address',
-													html: makeMailFromTemplate({
-														front_url: config.FRONT_URL,
-														header: 'Welcome!',
-														title: 'Click the button below to confirm your email.',
-														content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
-														link: verify_link,
-														button_text: 'Confirm email',
-														extra: '',
-													}),
-												};
-
-												// send it!
-												fycmailer.sendMail(mailOptions, function(err, info){
-													if(err){
-														res.status(400).json({
-															msg_register: err.toString()
-														});
-													}
-													else{
-														res.status(200).json({
-															msg_register: "Your organization account has been created successfully."
-														});
-													}
+										// send it!
+										fycmailer.sendMail(mailOptions, function(err, info){
+											if(err){
+												res.status(400).json({
+													msg_register: err.toString()
 												});
-											})
-											.catch(err => console.log(err));
+											}
+											else{
+												res.status(200).json({
+													msg_register: "Your organization account has been created successfully."
+												});
+											}
+										});
 									})
 									.catch(err => console.log(err));
-							});
-						});
-					}
+							})
+							.catch(err => console.log(err));
+					});
 				});
+				// }
+				// });
 			}
 			else{
 				const newUser = new User({
