@@ -388,50 +388,61 @@ router.post("/activate", async (req, res) => {
 
 								if(proration > 0){
 									// and amount for reminder of cycle.
-									const amount = Math.round(real_qty * proration * subscription.plan.amount);
+									let amount = Math.round(real_qty * proration * subscription.plan.amount);
+
+									// calc the additional one. (discount)
+									if(subscription.discount && subscription.discount.coupon.valid){
+										// TODO: check duration
+										if(subscription.discount.coupon.amount_off !== null){
+											amount -= subscription.discount.coupon.amount_off;
+										}
+										else if(subscription.discount.coupon.percent_off !== null){
+											amount *= (100 - subscription.discount.coupon.percent_off) / 100;
+										}
+									}
 
 									// create invoice item for reminder
 									const invo_item = await stripe.invoiceItems.create({
 										customer: user.billing_info.id,
 										amount: amount, // 5$ for 15 days.
 										currency: 'usd',
-										description: `One-off invoice for reminder. qty: ${real_qty}`,
+										description: "Community Subscription(s) (per profile)", // `One-off invoice for reminder. qty: ${real_qty}`,
 									});
-
-									// and delete all the items containing "Remaining" or "Unused".
-									const invoices_to_delete = await stripe.invoiceItems.list({
-										limit: 100, // max number of existing items
-										customer: user.billing_info.id,
-									});
-
-									// for each starts with "Remaining..." or "Unused..."
-									for(const invo_item of invoices_to_delete.data){
-										if(invo_item.invoice === null &&
-											(invo_item.description.startsWith("Remaining time on") ||
-												invo_item.description.startsWith("Unused time on"))){
-											// delete it!
-											const deleted_invo_item = await stripe.invoiceItems.del(invo_item.id);
-											console.log("Deleted invo item: ",
-												deleted_invo_item ? deleted_invo_item.id : null);
-										}
-									}
-
-									// Create one-off invoice from the existing invoice items.
-									last_invoice = await stripe.invoices.create({
-											customer: user.billing_info.id,
-											auto_advance: true,
-										},
-										async function(err, invo){
-											if(err){
-
-											}
-											else{
-												// Prepare to pay by finalizing the created invoice.
-												await stripe.invoices.finalizeInvoice(invo.id);
-												console.log("One-off invoice: ", invo.id);
-											}
-										});
 								}
+
+								// and delete all the items containing "Remaining" or "Unused".
+								const invoices_to_delete = await stripe.invoiceItems.list({
+									limit: 100, // max number of existing items
+									customer: user.billing_info.id,
+								});
+
+								// for each starts with "Remaining..." or "Unused..."
+								for(const invo_item of invoices_to_delete.data){
+									if(invo_item.invoice === null &&
+										(invo_item.description.startsWith("Remaining time on") ||
+											invo_item.description.startsWith("Unused time on"))){
+										// delete it!
+										const deleted_invo_item = await stripe.invoiceItems.del(invo_item.id);
+										console.log("Deleted invo item: ",
+											deleted_invo_item ? deleted_invo_item.id : null);
+									}
+								}
+
+								// Create one-off invoice from the existing invoice items.
+								last_invoice = await stripe.invoices.create({
+										customer: user.billing_info.id,
+										auto_advance: true,
+									},
+									async function(err, invo){
+										if(err){
+
+										}
+										else{
+											// Prepare to pay by finalizing the created invoice.
+											await stripe.invoices.finalizeInvoice(invo.id);
+											console.log("One-off invoice: ", invo.id);
+										}
+									});
 							}
 							else{
 								is_error = true;
@@ -684,16 +695,29 @@ router.post("/activatemulti", async (req, res) => {
 								// calculate the proration from reminder days.
 								const proration = subscription.status === "trialing" ? 0 : getDateDiff(new Date(), next_due_date) / (diff);
 
-								// and amount for reminder of cycle.
-								const amount = Math.round(real_qty * proration * subscription.plan.amount);
+								if(proration > 0){
+									// and amount for reminder of cycle.
+									let amount = Math.round(real_qty * proration * subscription.plan.amount);
 
-								// create invoice item for reminder
-								const invo_item = await stripe.invoiceItems.create({
-									customer: user.billing_info.id,
-									amount: amount, // 5$ for 15 days.
-									currency: 'usd',
-									description: `One-off invoice for reminder. qty: ${real_qty}`,
-								});
+									// calc the additional one. (discount)
+									if(subscription.discount && subscription.discount.coupon.valid){
+										// TODO: check duration
+										if(subscription.discount.coupon.amount_off !== null){
+											amount -= subscription.discount.coupon.amount_off;
+										}
+										else if(subscription.discount.coupon.percent_off !== null){
+											amount *= (100 - subscription.discount.coupon.percent_off) / 100;
+										}
+									}
+
+									// create invoice item for reminder
+									const invo_item = await stripe.invoiceItems.create({
+										customer: user.billing_info.id,
+										amount: amount, // 5$ for 15 days.
+										currency: 'usd',
+										description: `Community Subscription(s) (per profile)`, // ${real_qty}
+									});
+								}
 
 								// and delete all the items containing "Remaining" or "Unused".
 								const invoices_to_delete = await stripe.invoiceItems.list({
