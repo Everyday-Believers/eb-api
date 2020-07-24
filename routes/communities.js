@@ -440,6 +440,7 @@ router.post("/activate", async (req, res) => {
 										else{
 											// Prepare to pay by finalizing the created invoice.
 											await stripe.invoices.finalizeInvoice(invo.id);
+											await stripe.invoices.pay(invo.id);
 											console.log("One-off invoice: ", invo.id);
 										}
 									});
@@ -750,6 +751,7 @@ router.post("/activatemulti", async (req, res) => {
 										else{
 											// Prepare to pay by finalizing the created invoice.
 											await stripe.invoices.finalizeInvoice(invo.id);
+											await stripe.invoices.pay(invo.id);
 											console.log("One-off invoice: ", invo.id);
 										}
 									});
