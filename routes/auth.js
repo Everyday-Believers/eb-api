@@ -39,79 +39,79 @@ router.post("/register", (req, res) => {
 		}
 		else{
 			if(req.body.is_organization){
-				User.findOne({organization_name: req.body.organization_name}).then(user => {
-					if(user){
-						return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
-					}
-					else{
-						const newUser = new User({
-							fname: req.body.fname,
-							lname: req.body.lname,
-							email: req.body.email.toLowerCase(),
-							admin_email: req.body.email,
-							password: req.body.password,
-							is_organization: req.body.is_organization,
-							organization_name: req.body.organization_name,
-							zip_code: req.body.zip_code,
-							location: req.body.location,
-						});
-						// Hash password before saving in database
-						bcrypt.genSalt(10, (err, salt) => {
-							bcrypt.hash(newUser.password, salt, (err, hash) => {
-								if(err) throw err;
-								newUser.password = hash;
-								newUser
+				// User.findOne({organization_name: req.body.organization_name}).then(user => {
+				// if(user){
+				// 	return res.status(400).json({msg_reg_organization_name: "This organization name has already been registered. If you believe this is an error, please contact our support team at support@everydaybelievers.com."});
+				// }
+				// else{
+				const newUser = new User({
+					fname: req.body.fname,
+					lname: req.body.lname,
+					email: req.body.email.toLowerCase(),
+					admin_email: req.body.email,
+					password: req.body.password,
+					is_organization: req.body.is_organization,
+					organization_name: req.body.organization_name,
+					zip_code: req.body.zip_code,
+					location: req.body.location,
+				});
+				// Hash password before saving in database
+				bcrypt.genSalt(10, (err, salt) => {
+					bcrypt.hash(newUser.password, salt, (err, hash) => {
+						if(err) throw err;
+						newUser.password = hash;
+						newUser
+							.save()
+							.then(user => {
+								// send a mail to verify
+								const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
+								const verify_link = config.FRONT_URL + '/verify-email/' + key;
+
+								// Add new pending to verify email
+								const newPending = new VerifyPending({
+									key: key,
+									email: req.body.email.toLowerCase(),
+								});
+								newPending
 									.save()
-									.then(user => {
-										// send a mail to verify
-										const key = "VE" + base64.encode(btoa(new Date().toISOString()) + btoa(user.email) + btoa(user.registered_at.toString()));
-										const verify_link = config.FRONT_URL + '/verify-email/' + key;
+									.then(() => {
+										// preparing the mail contents...
+										const mailOptions = {
+											from: config.MAIL_SENDER,
+											to: req.body.email,
+											subject: 'Confirm your email address',
+											html: makeMailFromTemplate({
+												front_url: config.FRONT_URL,
+												header: 'Welcome!',
+												title: 'Click the button below to confirm your email.',
+												content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
+												link: verify_link,
+												button_text: 'Confirm email',
+												extra: '',
+											}),
+										};
 
-										// Add new pending to verify email
-										const newPending = new VerifyPending({
-											key: key,
-											email: req.body.email.toLowerCase(),
-										});
-										newPending
-											.save()
-											.then(() => {
-												// preparing the mail contents...
-												const mailOptions = {
-													from: config.MAIL_SENDER,
-													to: req.body.email,
-													subject: 'Confirm your email address',
-													html: makeMailFromTemplate({
-														front_url: config.FRONT_URL,
-														header: 'Welcome!',
-														title: 'Click the button below to confirm your email.',
-														content: 'If you believe you received this email in error, please delete it and/or contact our support team if you wish to troubleshoot further.',
-														link: verify_link,
-														button_text: 'Confirm email',
-														extra: '',
-													}),
-												};
-
-												// send it!
-												fycmailer.sendMail(mailOptions, function(err, info){
-													if(err){
-														res.status(400).json({
-															msg_register: err.toString()
-														});
-													}
-													else{
-														res.status(200).json({
-															msg_register: "Your organization account has been created successfully."
-														});
-													}
+										// send it!
+										fycmailer.sendMail(mailOptions, function(err, info){
+											if(err){
+												res.status(400).json({
+													msg_register: err.toString()
 												});
-											})
-											.catch(err => console.log(err));
+											}
+											else{
+												res.status(200).json({
+													msg_register: "Your organization account has been created successfully."
+												});
+											}
+										});
 									})
 									.catch(err => console.log(err));
-							});
-						});
-					}
+							})
+							.catch(err => console.log(err));
+					});
 				});
+				// }
+				// });
 			}
 			else{
 				const newUser = new User({
@@ -939,14 +939,28 @@ router.post("/search", (req, res) => {
 		counts[key] = new Array(req.body.filter[key].length).fill(0);
 	}
 
-	const base_criteria = req.body.filter.owner_id === undefined || req.body.filter.owner_id === '' ? {
+	let base_criteria = req.body.filter.owner_id === undefined || req.body.filter.owner_id === '' ? {
 		activated: true,
 	} : {
 		activated: true,
 		owner_id: req.body.filter.owner_id,
 	};
 
-	console.log('base criteria:', base_criteria);
+	if(req.body.owner !== null && req.body.owner !== undefined){
+		base_criteria = {
+			...base_criteria,
+			owner_id: req.body.owner,
+		};
+	}
+
+	if(!isEmpty(req.body.category)){
+		base_criteria = {
+			...base_criteria,
+			category: req.body.category,
+		};
+	}
+
+	// console.log('base criteria:', base_criteria);
 
 	Community.find(base_criteria).then(comms => {
 		for(let comm of comms){
@@ -957,10 +971,10 @@ router.post("/search", (req, res) => {
 			const lng = comm.coordinate ? comm.coordinate.lng : 0;
 			const dist = Math.round(getDistLatlng(req.body.lat, req.body.lng, lat, lng));
 
-			if(req.body.owner !== null && req.body.owner !== undefined){
-				if(req.body.owner !== comm.owner_id)
-					continue;
-			}
+			// if(req.body.owner !== null && req.body.owner !== undefined){
+			// 	if(req.body.owner !== comm.owner_id)
+			// 		continue;
+			// }
 
 			if(dist > (req.body.radius === null ? 5000 : req.body.radius))
 				continue;
@@ -970,8 +984,8 @@ router.post("/search", (req, res) => {
 				categories.push(comm.category);
 			}
 
-			if(!isEmpty(req.body.category) && comm.category !== req.body.category)
-				continue;
+			// if(!isEmpty(req.body.category) && comm.category !== req.body.category)
+			// 	continue;
 
 			// filtering
 			let is_passed = true;
@@ -1030,7 +1044,7 @@ router.post("/search", (req, res) => {
 			}
 		}
 
-		console.log(results.length);
+		// console.log(results.length);
 
 		return res.status(200).json({results: results, counts: counts, categories: categories});
 	});
@@ -1041,6 +1055,49 @@ router.post("/viewCommunity", (req, res) => {
 	Community.findOne({_id: req.body.id}).then(comm => {
 		return res.status(200).json(comm);
 	});
+});
+
+savePictures = (id, pictures) => {
+	let i = 0;
+	for(const pic of pictures){
+		const meta_data = pic.split(";base64,");
+		const ext = meta_data[0].split("/")[1];
+		fs.writeFile(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64', err => {
+			console.log(err);
+		});
+		i++;
+	}
+};
+
+getPictureNames = (info) => {
+	let names = [];
+	for(const pic of info.pictures){
+		names.push(pic.split(";base64,")[0].split("/")[1]);
+	}
+	return names;
+};
+
+router.all("/migrate-pictures", (req, res) => {
+	Community.find()
+		.then(comms => {
+			comms.forEach((comm, index) => {
+				if(comm.pictures.length > 0 && comm.pictures[0].length > 300){
+					console.log(index, comm._id, comm.pictures.length, `image${comm.pictures.length > 1 ? "s" : ""}`);
+					// save images
+					savePictures(comm._id, comm.pictures);
+
+					// update community info
+					Community.updateOne({_id: comm._id}, {pictures: getPictureNames(comm)}, null, err => {
+						if(err)
+							console.log(err.toString());
+					});
+				}
+			})
+			return res.status(200).json({message: "success"});
+		})
+		.catch(err => {
+			return res.status(500).json({message: err.toString()});
+		})
 });
 
 module.exports = router;
