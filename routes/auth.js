@@ -911,7 +911,8 @@ const filter_length = {
 const filters1 = ['days', 'times', 'hosting', 'ages', 'parking', 'ministries', 'other_services'];
 const filters2 = ['frequency', 'gender', 'kids_welcome', 'ambiance', 'event_type', 'support_type'];
 router.post("/search", (req, res) => {
-	console.log('search criteria:', req.body);
+//	console.log('search criteria:', req.body);
+//	console.log(req.body.category.length);
 
 	let results = [];
 	let categories = [];
@@ -980,7 +981,7 @@ router.post("/search", (req, res) => {
 				continue;
 
 			// check the category
-			if(!categories.includes(comm.category)){
+			if(req.body.category.length === 0 && !categories.includes(comm.category)){
 				categories.push(comm.category);
 			}
 
@@ -1046,7 +1047,7 @@ router.post("/search", (req, res) => {
 
 		// console.log(results.length);
 
-		return res.status(200).json({results: results, counts: counts, categories: categories});
+		return res.status(200).json({results: results, counts: counts, categories: req.body.category.length === 0 ? categories : null});
 	});
 });
 
