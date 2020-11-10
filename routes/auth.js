@@ -991,16 +991,19 @@ router.post("/search", (req, res) => {
 			// filtering
 			let is_passed = true;
 			for(const filter1 of filters1){
-				if(!is_passed)
-					continue;
+				if(!is_passed) continue;
 				const dat_filter = comm[filter1] === undefined ? '0'.repeat(filter_length[filter1]) : comm[filter1];
 				const dat1_value = parseInt(dat_filter, 2);
 				const pat1_value = parseInt(req.body.filter[filter1], 2);
-				if(pat1_value === 0)
-					continue;
-				if((dat1_value & pat1_value) !== pat1_value){
+				
+				if(pat1_value === 0) continue;
+
+				if((dat1_value & pat1_value) === 0){
 					is_passed = false;
 				}
+				// if((dat1_value & pat1_value) !== pat1_value){
+				// 	is_passed = false;
+				// }
 			}
 
 			if(is_passed){
