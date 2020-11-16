@@ -19,6 +19,7 @@ const getDistLatlng = require("../utils/latlng-dist");
 const config = require("../config");
 const fycmailer = require("../utils/fyc-mailer");
 const makeMailFromTemplate = require("../utils/mail-template");
+const AWS_UTIL = require("../utils/aws");
 
 /**
  * Register a user
@@ -1061,16 +1062,20 @@ router.post("/viewCommunity", (req, res) => {
 	});
 });
 
-savePictures = (id, pictures) => {
+savePictures = async (id, pictures) => {
 	let i = 0;
-	for(const pic of pictures){
+	let files = [];
+	for (const pic of pictures) {
 		const meta_data = pic.split(";base64,");
 		const ext = meta_data[0].split("/")[1];
-		fs.writeFile(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64', err => {
-			console.log(err);
-		});
+		fs.writeFileSync(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64');
+		const file = await AWS_UTIL.uploadImage('./public/pictures/', `${id}-${i}.${ext}`);
+		if (!file.error) {
+			files.push(file.file);
+		}
 		i++;
 	}
+	return files;
 };
 
 getPictureNames = (info) => {
@@ -1081,27 +1086,27 @@ getPictureNames = (info) => {
 	return names;
 };
 
-router.all("/migrate-pictures", (req, res) => {
-	Community.find()
-		.then(comms => {
-			comms.forEach((comm, index) => {
-				if(comm.pictures.length > 0 && comm.pictures[0].length > 300){
-					console.log(index, comm._id, comm.pictures.length, `image${comm.pictures.length > 1 ? "s" : ""}`);
-					// save images
-					savePictures(comm._id, comm.pictures);
+router.all("/migrate-pictures", async (req, res) => {
+	Community.find().then(async (comms) => {
+		for (let comm of comms) {
+			if(comm.pictures.length > 0 && comm.pictures[0].length > 300){
+				// console.log(index, comm._id, comm.pictures.length, `image${comm.pictures.length > 1 ? "s" : ""}`);
+				// save images
+				// savePictures(comm._id, comm.pictures);
+				const files = await savePictures(comm._id, comm.pictures)
 
-					// update community info
-					Community.updateOne({_id: comm._id}, {pictures: getPictureNames(comm)}, null, err => {
-						if(err)
-							console.log(err.toString());
-					});
-				}
-			})
-			return res.status(200).json({message: "success"});
-		})
-		.catch(err => {
-			return res.status(500).json({message: err.toString()});
-		})
+				// update community info
+				Community.updateOne({_id: comm._id}, {pictures: files}, null, err => {
+					if(err)
+						console.log(err.toString());
+				});
+			}
+		}
+
+		return res.status(200).json({message: "success"});
+	}).catch(err => {
+		return res.status(500).json({message: err.toString()});
+	})
 });
 
 module.exports = router;
