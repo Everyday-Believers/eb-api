@@ -6,17 +6,22 @@ const config = require("../config");
 const stripe = require('stripe')(config.STRIPE_SK);
 const Community = require("../models/Community");
 const User = require("../models/User");
+const AWS_UTIL = require("../utils/aws");
 
-savePictures = (id, pictures) => {
+savePictures = async (id, pictures) => {
 	let i = 0;
-	for(const pic of pictures){
+	let files = [];
+	for (const pic of pictures) {
 		const meta_data = pic.split(";base64,");
 		const ext = meta_data[0].split("/")[1];
-		fs.writeFile(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64', err => {
-			console.log(err);
-		});
+		fs.writeFileSync(`./public/pictures/${id}-${i}.${ext}`, meta_data[1], 'base64');
+		const file = await AWS_UTIL.uploadImage('./public/pictures/', `${id}-${i}.${ext}`);
+		if (!file.error) {
+			files.push(file.file);
+		}
 		i++;
 	}
+	return files;
 };
 
 getPictureNames = (info) => {
@@ -32,7 +37,7 @@ getPictureNames = (info) => {
  *
  * @route POST api/communities/create
  */
-router.post("/create", (req, res) => {
+router.post("/create", async (req, res) => {
 	const community_info = req.body.data;
 
 	// check the validation of (community_name, category, address)
@@ -40,57 +45,55 @@ router.post("/create", (req, res) => {
 		return res.status(400).json({
 			msg_community: "Oops, this error message should not be shown."
 		});
-	}
-	else if(isEmpty(community_info.community_name)){
+	} else if(isEmpty(community_info.community_name)){
 		return res.status(400).json({
 			msg_community_name: "Community name is required",
 		});
-	}
-	else if(isEmpty(community_info.category)){
+	} else if(isEmpty(community_info.category)){
 		return res.status(400).json({
 			msg_community_category: "Category is required",
 		});
-	}
-	else if(isEmpty(community_info.address)){
+	} else if(isEmpty(community_info.address)){
 		return res.status(400).json({
 			msg_community_address: "Community address is required",
 		});
-	}
-	else{
+	} else{
 		// check existence for voiding of duplication.
 		Community.findOne({
 			_id: req.body.community_id === -1 ? null : req.body.community_id,
-		}).then(community => {
-			if(community){ // if it already exists and new, cannot create it.
+		}).then(async community => {
+			if (community){ // if it already exists and new, cannot create it.
 				if(req.body.is_new){ // cannot create
 					return res.status(400).json({msg_community: "The community already exists."});
-				}
-				else{ // edit it.
+				} else { // edit it.
+					const files = await savePictures(community._id, community_info.pictures);
+					console.log(files);
 					community.updateOne({
 						...community_info,
-						pictures: getPictureNames(community_info),
+						pictures: files,
 					})
 						.then(comm => {
 							console.log("edited: ", community._id);
 							// save community_info.pictures to disk as image files
-							savePictures(community._id, community_info.pictures);
 							return res.status(200).json({msg_community: "The community was saved."});
 						})
 						.catch(err => console.log(err));
 					console.log("The community modified.");
 				}
-			}
-			else{ // we can create it.
+			} else { // we can create it.
 				const newCommunity = new Community({
 					...community_info,
 					pictures: getPictureNames(community_info),
 				});
-				newCommunity
-					.save()
-					.then(comm => {
+				newCommunity.save()
+					.then(async comm => {
 						console.log("a new created", comm._id);
 						// save community_info.pictures to disk as image files
-						savePictures(comm._id, community_info.pictures);
+						const files = await savePictures(comm._id, community_info.pictures);
+						Community.updateOne({_id: comm._id}, {pictures: files}, err => {
+							console.log(err)
+						});
+						
 						return res.status(200).json({msg_community: "The community was created."});
 					})
 					.catch(err => console.log(err));
