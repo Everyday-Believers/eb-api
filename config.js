@@ -35,4 +35,11 @@ module.exports = {
 	 */
 	STRIPE_SK: process.env.STRIPE_SK,
 	SUBSCRIBER_MONTHLY_PLAN: process.env.STRIPE_MONTHLY_PLAN,
+
+	/**
+	 * Secret key for AWS
+	 */
+	AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+	AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+	AWS_STORAGE_BUCKET_NAME: process.env.AWS_STORAGE_BUCKET_NAME,
 };
